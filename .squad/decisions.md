@@ -1463,6 +1463,27 @@ The guardrails are designed to force verification loops and exhaust all options 
 - Should prevent repeat of version confusion and premature PR closure
 - Makes the "Zero tolerance for state corruption" principle enforceable
 
+### 2026-03-05: Worktree-Based Parallel Work & Multi-Repo Strategy
+**Author:** Kobayashi (Git & Release)
+**Status:** Approved (Brady directive)
+
+## Context
+
+Brady directed: "I don't mind multiple worktrees and multiple clones of agents running when that is needed. Especially in downstream multi-repo scenarios."
+
+## Decision
+
+1. **Parallel multi-issue work** uses `git worktree add` — one worktree per issue, named `../{repo}-{issue-number}`, each on its own `squad/{issue}-{slug}` branch from dev.
+2. **Multi-repo downstream work** uses separate sibling clones (not worktrees). PRs are linked in descriptions and merged dependency-first.
+3. **`.squad/` state** relies on `merge=union` in `.gitattributes` for concurrent worktree safety. Append-only rule applies.
+4. **Selection rule:** Single issue → standard workflow. 2+ simultaneous issues in same repo → worktrees. Cross-repo → separate clones.
+
+## Artifacts Updated
+
+- `.squad/skills/git-workflow/SKILL.md` — Added worktree, multi-repo, and cleanup sections
+- `.squad/agents/kobayashi/charter.md` — Branching Model section now documents parallel work strategy
+- `.squad/agents/kobayashi/history.md` — Learnings recorded
+
 ---
 
 ### 2026-03-03: Kobayashi History Corrections — Version Target & PR #582 Merge

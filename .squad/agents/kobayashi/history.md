@@ -7,6 +7,15 @@
 
 ## Learnings
 
+### Worktree Parallelism & Multi-Repo Coordination
+
+- **Worktrees for parallel issues:** `git worktree add ../{repo}-{issue} -b squad/{issue}-{slug} origin/dev` gives each agent a fully isolated working directory. Shares the `.git` object store, so it's disk-efficient. No branch switching in the main clone.
+- **`.squad/` state safety:** The `merge=union` strategy in `.gitattributes` handles concurrent appends from multiple worktrees. Rule: append only, never rewrite or reorder.
+- **Cleanup discipline:** `git worktree remove` + `git worktree prune` after merge. Stale worktrees are state corruption waiting to happen.
+- **Multi-repo coordination:** Separate sibling clones, not worktrees. Worktrees share a single repo's object store — cross-repo needs separate clones. Link PRs in descriptions, merge dependencies first.
+- **Local linking for cross-repo testing:** `npm link`, `go replace`, `pip install -e .` — always remove before commit.
+- **Decision rule:** Single issue → standard workflow. 2+ simultaneous issues → worktrees. Different repos → separate clones.
+
 ### 2026-03-07: Closed Public Repo Issues #175 & PR #182 — Documented Superseding Implementations (COMPLETE)
 **Status:** CLOSED. Both issues closed with appreciation for community work; implementations verified in current codebase.
 

@@ -423,6 +423,8 @@
 
 ## Learnings
 
+📌 Team update (2026-03-05T01:21:00Z): Worktree-based parallelism and multi-repo support now documented in git-workflow skill — agents can now spawn in parallel across multiple worktrees for same-repo concurrent issues, or separate clones for cross-repo downstream work — decided by Kobayashi
+
 - Multi-session management pattern: create all sessions upfront, store sessionIds in player state, resume per request
 - Context injection for adaptive agents: The Learner gets opponent history, others get static prompts
 - Parallel LLM calls via Promise.all() for concurrent player moves — reduces total latency

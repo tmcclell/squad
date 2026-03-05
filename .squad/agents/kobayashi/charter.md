@@ -43,6 +43,14 @@ Squad uses a dev-first, three-branch workflow:
 - dev → insiders sync is automated
 - dev → main merge is manual (release gate)
 - Main only receives merges from dev. No direct commits.
+- **Parallel work:** Use `git worktree add` when 2+ issues are worked simultaneously. See `.squad/skills/git-workflow/SKILL.md`.
+- **Multi-repo:** Use separate clones as siblings, not worktrees. Coordinated PRs linked in descriptions.
+
+**Parallel work:**
+- 2+ simultaneous issues in one repo → `git worktree add ../{repo}-{issue} -b squad/{issue}-{slug} origin/dev`
+- Each agent gets its own worktree; no filesystem collision
+- Cross-repo work → separate sibling clones, not worktrees
+- See `.squad/skills/git-workflow/SKILL.md` for full procedures
 
 ## Guardrails — Hard Rules
 
