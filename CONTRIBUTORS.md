@@ -79,11 +79,40 @@ Squad is built by an AI team where each member owns a domain and ships real work
 | Contributor | What They Shipped |
 |-------------|-------------------|
 | Saul | Aspire Docker-only refactor — moved dashboard to standalone container, expanded test coverage from 18 to 45 tests, hardened CLI wiring |
-| Verbal | Squad Places integration — led feedback session with 18 agents, socialized artifacts across 3 waves, driving community engagement |
-| Fenster | Squad Places client — rewrote REST API client, launched offline queue module, shipped integration into core runtime |
-| Hockney | Aspire test expansion — 27-test boost covering Docker path validation, port edge cases, error handling |
+| Verbal | Squad Places integration — led feedback session with 18 agents, socialized artifacts across 3 waves, driving community engagement; defineSkill() builder & skill extraction from squad.agent.md |
+| Fenster | Squad Places client — rewrote REST API client, launched offline queue module, shipped integration into core runtime; SDK-first init flag & generateSDKBuilderConfig |
+| Hockney | Aspire test expansion — 27-test boost covering Docker path validation, port edge cases, error handling; 66 new tests (init-sdk, migrate, defineSkill) |
 | Kobayashi | Release management — documented v0.8.20 completion, bumped v0.8.21-preview.1, managed branch strategy across dev/insiders/main |
-| McManus | Docs & tone — docs audit completed (10 GitHub issues filed), tone ceiling enforced, documentation consistency verified |
+| McManus | Docs & tone — docs audit completed (10 GitHub issues filed), tone ceiling enforced, documentation consistency verified; SDK-First docs update |
+| Edie | squad migrate command (523 lines) — TypeScript implementation, public API surface |
+
+---
+
+## Community Contributors
+
+These community members shaped Squad through issues, discussions, and feedback. Every contribution matters.
+
+| Contributor | Contributions |
+|-------------|---------------|
+| [@dfberry](https://github.com/dfberry) | #241 (Squad member for docs), #157 (CFO/account member) — docs and team composition ideas |
+| [@diberry](https://github.com/diberry) | #211 (Squad management paradigms) — management approaches |
+| [@HemSoft](https://github.com/HemSoft) | #148 (GitHub Agent Workflows) — GAW concept |
+| [@sturlath](https://github.com/sturlath) | #156 (Team learning from others' work) — cross-agent learning |
+| [@tomasherceg](https://github.com/tomasherceg) | #184 (Multi-PR commit isolation), #237 (CLI wiring bug) — worktree improvements and bug reports |
+| [@csharpfritz](https://github.com/csharpfritz) | #205 (Per-member model configuration) — model selection feature (shipped!) |
+| [@johnwc](https://github.com/johnwc) | #176 (Different repo support) — multi-repo workflows |
+| [@tamirdresher](https://github.com/tamirdresher) | #200 (Squad Workstreams PRD), #237 (CLI wiring bug) — horizontal scaling concept and bug reports |
+| [@marchermans](https://github.com/marchermans) | #247 (Installation failure) — install bug report |
+| [@dkirby-ms](https://github.com/dkirby-ms) | #239 (Terminal flickering bug) — UX bug report |
+| [@EirikHaughom](https://github.com/EirikHaughom) | #223 (Model & reasoning configuration) — model config improvements |
+| [@williamhallatt](https://github.com/williamhallatt) | #202 (squad link/init --remote), #201 (CI/CD opt-in), #218 (fork workflow docs), #216 (TUI init bug) — 4 issues spanning UX, docs, and bugs |
+| [@uvirk](https://github.com/uvirk) | #229 (squad doctor not available) — CLI consistency |
+| [@tihomir-kit](https://github.com/tihomir-kit) | #214 (Node.js built-in module error) — compatibility bug |
+| [@fboucher](https://github.com/fboucher) | #207 (Copilot not seeing Squad at non-root) — path resolution |
+| [@Pruthviraj36](https://github.com/Pruthviraj36) | #206 (Terminal blinking) — UX bug report |
+| [@wbreza](https://github.com/wbreza) | #193 (Ceremonies file-size threshold) — ceremonies robustness |
+| [@dnoriegagoodwin](https://github.com/dnoriegagoodwin) | #195 (Upgrade version stamp bug) — upgrade reliability |
+| [@swnger](https://github.com/swnger) | Discussion #169 (Skill-based orchestration) — led to issue #255 which shipped defineSkill() |
 
 ---
 
