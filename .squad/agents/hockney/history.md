@@ -217,3 +217,5 @@
 - Timer cleanup issues
 
 
+
+📌 Team update (2026-03-07T21:06:29Z): Team restructure — Kobayashi retired, Trejo (Release Manager) + Drucker (CI/CD Engineer) hired. Separation of concerns: Trejo WHAT/WHEN, Drucker HOW. 10 decisions merged. 4-0 REPLACE vote. — Scribe

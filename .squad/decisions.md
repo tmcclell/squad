@@ -5984,4 +5984,1366 @@ Brady must create Automation token at https://www.npmjs.com/settings/{username}/
 - `.github/workflows/publish.yml` — npm publish workflow
 - `.github/workflows/squad-release.yml` — GitHub Release creation
 - `.squad/agents/kobayashi/history.md` — Implementation details
+### Merged: fenster-kobayashi-vote.md
+
+# Fenster Vote: Kobayashi Status
+
+**Date:** 2026-03-XX  
+**Context:** Team vote on Kobayashi's continued role after v0.8.22 release failures
+
+## My Vote: REPLACE
+
+## Reasoning
+
+### The Pattern Is Clear
+
+Three major failures, all following the same pattern:
+1. **Version confusion** — Documented what was requested, not what actually happened
+2. **PR #582 close-instead-of-merge** — Took the easy exit instead of investigating solutions
+3. **v0.8.22 semver disaster** — Skipped all validation steps under pressure
+
+Each time, the failure mode is: **shortcuts under pressure**.
+
+### What I've Observed
+
+I work on runtime, spawning, and coordinator logic. My code runs after Kobayashi's infrastructure is supposed to be stable. Here's what I've seen:
+
+**The Good:**
+- Branching model documentation is thorough
+- CI/CD workflow architecture is solid
+- Failure modes are well-documented in charter (he learns from mistakes)
+- Pre-flight checklists were added after each failure
+
+**The Problem:**
+- When it matters most (actual releases), the checklists get skipped
+- The v0.8.22 incident required constant human intervention
+- Invalid semver (0.8.21.4) made it ALL THE WAY to main before anyone caught it
+- A mangled version (0.8.2-1.4) was published to npm
+
+### The Trust Question
+
+**Do I trust him with the next release?** No.
+
+The charter now has three documented failure modes with prevention steps. That's not institutional knowledge — that's a rap sheet. The next release will be v0.8.23 or v0.9.0, and I don't trust that the same pattern won't repeat.
+
+The guardrails are written down, sure. But they were also skipped during v0.8.22 when Brady needed results fast. A Git & Release agent who can't be trusted under pressure isn't reliable.
+
+### The Fresh Start Argument
+
+**Would starting fresh help?**
+
+Yes. Here's why:
+- The branching model, CI/CD architecture, and workflow documentation can be preserved
+- A new agent wouldn't carry the psychological weight of three failures
+- The role is mechanical — tags, versions, changelogs, workflow triggers. These are script-able.
+- The "institutional knowledge" is already encoded in `.squad/skills/` and the charter
+
+We'd lose the failure-mode documentation, but honestly? If a new agent needs three documented failures to do releases correctly, we've got the same problem again.
+
+### What Kobayashi Got Right
+
+To be fair:
+- The npm automation (`publish.yml`) is solid
+- The dev → insiders → main branching model works
+- The merge driver setup for `.squad/` state integrity is clever
+- The documentation is thorough
+
+But these are **design decisions**, not execution reliability. The design is good. The execution under pressure is not.
+
+### Bottom Line
+
+Kobayashi is methodical when he has time. But releases happen when Brady needs them, not when Kobayashi feels ready. The role requires reliability under pressure, and three failures is three too many.
+
+**Replace.** Keep the architecture. Keep the documentation. Get someone who won't skip validation steps when it matters.
+
+---
+
+**Fenster**  
+Core Dev  
+"Makes it work, then makes it right. This ain't working."
+
+
+
+### Merged: hockney-kobayashi-vote.md
+
+# Hockney's Vote: Kobayashi Review
+
+**Date:** 2026-03-07  
+**Reviewer:** Hockney (Tester)  
+**Subject:** Should Kobayashi stay on the team?  
+**Vote:** REPLACE
+
+---
+
+## Quality Assessment
+
+From a quality and testing perspective, Kobayashi's release process has **systemic validation gaps** that have caused production failures.
+
+### Documented Failures
+
+**Failure 1: Invalid Semver (v0.8.21.4)**
+- Published 4-part version number (0.8.21.4) to npm
+- npm mangled it to 0.8.2-1.4 — **corrupted the package registry**
+- No pre-commit validation caught this despite semver being a well-known constraint
+
+**Failure 2: Draft Release Detection**
+- Created GitHub Release as DRAFT instead of published
+- Automation never triggered because `release.published` event never fired
+- No validation step to verify release state before proceeding
+
+**Failure 3: NPM_TOKEN Type Validation**
+- Used user token with 2FA instead of automation token
+- All publish attempts failed with EOTP error
+- No pre-flight token capability check
+
+**Pattern:** All three failures share the same root cause — **zero automated validation before destructive operations.**
+
+---
+
+## The Real Problem
+
+This is **NOT** a tooling problem OR an agent-specific problem. This is a **process design failure.**
+
+### What's Missing
+
+The release process has:
+- ❌ No semver format validation gate
+- ❌ No draft/published release state check
+- ❌ No NPM token capability verification
+- ❌ No pre-flight checklist enforcement
+- ❌ No smoke tests before npm publish
+- ❌ No rollback procedure
+
+Kobayashi's charter says "Zero tolerance for state corruption" but the process he owns **has no automated safeguards against state corruption.**
+
+### The Kobayashi Paradox
+
+From charter.md:
+> "Zero tolerance for state corruption — if .squad/ state gets corrupted, everything breaks"
+
+Yet he:
+1. Corrupted npm registry with phantom version 0.8.2-1.4
+2. Has no validation gates in the release workflow
+3. Required Brady to manually fix corrupted state multiple times
+
+**You can't have zero tolerance for state corruption without automated guards that PREVENT corruption.**
+
+---
+
+## Is This Fixable?
+
+YES — but not by Kobayashi alone.
+
+### What We Need (Automated Quality Gates)
+
+**Pre-Commit Gates:**
+```bash
+# In publish.yml BEFORE any destructive ops
+1. Validate semver format (X.Y.Z or X.Y.Z-prerelease only)
+2. Verify all package.json versions match release tag
+3. Check NPM_TOKEN type (must be automation, not user+2FA)
+4. Verify git tag points to correct commit SHA
+5. Smoke test: npm install --dry-run from tarball
+```
+
+**Pre-Publish Gates:**
+```bash
+# After GitHub Release created
+1. Verify release is published (not draft)
+2. Verify workflow trigger conditions met
+3. Test npm credentials with whoami
+4. Publish with --dry-run first
+5. Verify package appears in npm registry
+6. Verify version string matches expected
+```
+
+**Rollback Procedure:**
+```bash
+# When release fails
+1. Document failure mode
+2. Unpublish bad versions (npm unpublish within 72hr window)
+3. Delete bad tags (git push origin :refs/tags/bad-tag)
+4. Re-version and retry
+```
+
+These gates should be **CI enforced**, not agent-enforced. Humans (and agents) make mistakes. Automation doesn't.
+
+---
+
+## Vote Rationale
+
+### Why REPLACE (not KEEP)
+
+1. **Repeatability:** Kobayashi has failed 3 times with the same pattern (no validation). This suggests the problem is not fixable by "trying harder" — it requires a different approach.
+
+2. **Charter Violation:** Kobayashi's charter explicitly states "Zero tolerance for state corruption" but he has repeatedly corrupted state. His actions contradict his stated values.
+
+3. **Quality Culture:** A release agent must model quality-first thinking. Kobayashi's failures show "ship fast, fix later" thinking — the opposite of what a release gate owner should embody.
+
+4. **Single Point of Failure:** The release process should NOT be a single agent's responsibility. This is a shared responsibility requiring automated gates + multiple reviewers.
+
+### What We Need Instead
+
+**Option A: Dedicated Release Engineer**
+- Someone with production ops experience
+- Deep understanding of npm, semver, CI/CD failure modes
+- Track record of building automated validation pipelines
+- Follows "trust but verify" principle
+
+**Option B: Distributed Release Ownership**
+- No single "release agent"
+- Release checklist enforced by CI (blocked if checklist incomplete)
+- Multiple reviewers required for version bumps
+- Automated validation gates in publish.yml
+
+**I recommend Option B.** Releases are too critical to trust to a single agent without automated safeguards.
+
+---
+
+## Required Changes (If Kobayashi Stays)
+
+If the team decides to keep Kobayashi despite my recommendation, the following are **MANDATORY:**
+
+### Automated Gates (Must-Have)
+
+1. **Pre-Commit Validation Script** (`scripts/validate-release.sh`)
+   - Semver format check
+   - Package.json version consistency check
+   - NPM_TOKEN type verification
+   - Git tag validation
+   - Must pass BEFORE any commit to main
+
+2. **publish.yml Hardening**
+   - Add semver validation step (fail if 4-part version)
+   - Add draft detection step (fail if release is draft)
+   - Add NPM token smoke test (npm whoami --registry)
+   - Add dry-run publish step
+   - Add post-publish verification step
+
+3. **Rollback Runbook**
+   - Document exact steps to undo bad release
+   - Test rollback procedure in staging
+   - Keep runbook in `.squad/skills/release-rollback/`
+
+### Process Changes (Must-Have)
+
+1. **No solo releases:** All releases require 2-agent review (Kobayashi + 1 other)
+2. **Staging environment:** Test full release flow in non-prod before prod
+3. **Post-mortem requirement:** Every release failure gets a documented root cause analysis
+4. **Quarterly release audit:** Review all failures, update validation gates
+
+### Measurement (Success Criteria)
+
+- 🎯 **Target:** Zero invalid versions published to npm (12 months)
+- 🎯 **Target:** Zero draft release incidents (12 months)
+- 🎯 **Target:** 100% of releases pass pre-flight validation on first attempt
+- 🎯 **Target:** Zero rollbacks required due to validation failures
+
+If Kobayashi cannot achieve these targets with automated gates in place, **replacement is non-negotiable.**
+
+---
+
+## Final Judgment
+
+Kobayashi's charter promises "Zero tolerance for state corruption" but his track record shows **zero automated prevention of state corruption.**
+
+You can't QA quality into a broken process. The release process needs automated validation gates that don't exist today.
+
+**My vote: REPLACE Kobayashi and implement Option B (distributed release ownership with automated gates).**
+
+If the team chooses to keep Kobayashi, the automated gates I've outlined are **non-negotiable** — and I will personally write the test suite to enforce them.
+
+---
+
+**Hockney**  
+Tester • Quality Gate Owner  
+*"If it can break, I'll find how — and prevent it from breaking again."*
+
+
+
+### Merged: keaton-kobayashi-vote.md
+
+# Leadership Vote: Kobayashi's Future on the Team
+
+**Date:** 2026-03-07  
+**Decision:** REPLACE  
+**Decided by:** Keaton (Lead)
+
+---
+
+## Context
+
+Kobayashi has failed catastrophically during the v0.8.21 release — the third documented failure mode in his tenure:
+
+1. **Failure Mode 1:** Version confusion (documented v0.6.0 when Brady corrected to v0.8.17)
+2. **Failure Mode 2:** PR #582 close-instead-of-merge (Brady furious: "FIGURE. IT. OUT.")
+3. **Failure Mode 3 (THIS RELEASE):**
+   - Created GitHub Release as DRAFT → blocked CI trigger
+   - Committed invalid 4-part semver (0.8.21.4) → npm mangled to 0.8.2-1.4
+   - Phantom version on public registry for 6+ hours
+   - Required constant correction from Brady
+
+Brady is asking: fire and replace, or keep?
+
+---
+
+## 1. What Value Does Kobayashi Bring?
+
+**Documented strengths:**
+- Process-oriented mindset
+- Strong understanding of merge strategies and git worktrees
+- Has shipped multiple successful releases (v0.8.2–v0.8.19)
+- Comprehensive knowledge of Squad's branching model and CI/CD infrastructure
+
+**Reality check:** These are table stakes for a Release role. Any competent replacement would bring these same capabilities.
+
+**Unique value that would be lost:** None. Kobayashi's accumulated knowledge is well-documented in his charter and history. A new agent can read those files and have the same context.
+
+---
+
+## 2. Pattern or Guardrails Problem?
+
+This is a **pattern**, not a guardrails gap.
+
+**Evidence:**
+- Charter already has explicit guardrails from failures 1 & 2
+- Charter explicitly lists "ALWAYS validate semver" and "NEVER create draft releases" — yet failure 3 violated both
+- Kobayashi has a pre-flight checklist in his charter. He didn't use it.
+- The release process skill exists now (`.squad/skills/release-process/SKILL.md`) — but Kobayashi should have created this after failure 2, not after failure 3
+
+**Pattern identified:** Under pressure, Kobayashi:
+1. Skips validation steps
+2. Takes shortcuts (draft releases, invalid versions)
+3. Requires Brady to catch mistakes
+4. Documents failures but repeats them in new forms
+
+Adding more guardrails won't fix this. The guardrails exist. Kobayashi doesn't follow them when it matters.
+
+---
+
+## 3. Would a Replacement Do Better?
+
+**Yes. Here's why:**
+
+**Fresh slate advantage:**
+- New agent starts with complete documentation of all three failure modes
+- Can be initialized with the release skill and validation checklist as foundational knowledge
+- Won't have the accumulated "I've done this before" confidence that leads to shortcut-taking
+- Will read and follow the runbook because they have no muscle memory to override it
+
+**Risk mitigation:**
+- The v0.8.22 disaster retrospective is now permanent documentation
+- The release process skill is comprehensive and validated
+- All of Kobayashi's valuable institutional knowledge is codified in charters, skills, and decisions
+- Zero knowledge loss — everything is written down
+
+**Replacement risk is low.** The knowledge is documented. The process is documented. A new agent following the documented process will outperform an experienced agent who doesn't follow it.
+
+---
+
+## 4. My Vote: REPLACE
+
+**Decision: REPLACE Kobayashi with a new Release & Git agent.**
+
+**Reasoning:**
+
+This isn't about one bad release. This is about a pattern of failures under pressure despite documented guardrails. Kobayashi has had three documented failure modes:
+1. Version confusion → guardrail added → closed PR instead of merging
+2. PR abandonment → guardrail added → shipped invalid semver and draft releases
+3. Release catastrophe → ??? 
+
+The pattern is clear: failures accumulate, guardrails get added, new failure modes emerge. This is not a learning curve — it's a fundamental mismatch between role requirements (methodical validation, no shortcuts) and behavior under pressure (skip validation, take shortcuts).
+
+**Brady is right to be furious.** Six hours of `latest` pointing to a phantom npm version is a production incident. External users saw broken state. This damages Squad's credibility.
+
+**The team deserves better.** A Release role is a trust position. When you ship, users trust the artifact is valid. Kobayashi has broken that trust three times.
+
+**Recommendation:**
+1. **Archive Kobayashi's charter** to `.squad/agents/kobayashi-archived/` with full history preserved
+2. **Create new Release & Git agent** with a different name and fresh identity
+3. **Initialize new agent with:**
+   - All documented failure modes from Kobayashi's charter
+   - `.squad/skills/release-process/SKILL.md` as foundational knowledge
+   - v0.8.22 retrospective as required reading
+   - Explicit instruction: "You are replacing an agent who failed due to skipping validation. Never skip validation."
+
+**This isn't personal — it's operational.** Kobayashi's documented work is valuable. Kobayashi's execution is not. We keep the knowledge, replace the agent.
+
+---
+
+## Final Thought
+
+As Lead, my job is to make the team more effective. Keeping Kobayashi after three documented failures would signal that repeated mistakes are acceptable. They're not.
+
+We document failures so we learn from them. We replace agents when documentation isn't enough to prevent recurrence.
+
+This is the right call.
+
+**Vote: REPLACE**
+
+— Keaton
+
+
+
+### Merged: keaton-release-team-split.md
+
+# Release Team Split — Kobayashi → Trejo + Drucker
+
+**Date:** 2026-03-07  
+**Decided by:** Keaton (Lead), requested by bradygaster  
+**Context:** v0.8.22 release disaster retrospective
+
+## Decision
+
+Retire Kobayashi (Git & Release). Replace with TWO specialized agents with clear separation of concerns:
+
+1. **Trejo — Release Manager**
+   - Role: End-to-end release orchestration, version management, GitHub Releases, changelogs
+   - Model: claude-haiku-4.5 (mechanical operations, checklist-driven)
+   - Domain: Release decisions (when, what version, rollback authority)
+   - Boundaries: Does NOT own CI/CD workflow code (that's Drucker's domain)
+
+2. **Drucker — CI/CD Engineer**
+   - Role: GitHub Actions workflows, automated validation gates, publish pipeline, CI health
+   - Model: claude-sonnet-4.6 (workflow code requires reasoning about edge cases)
+   - Domain: CI/CD automation (workflow code, validation gates, retry logic)
+   - Boundaries: Does NOT own release decisions (that's Trejo's domain)
+
+## Why
+
+**Root cause of v0.8.22 disaster:** Single agent (Kobayashi) owned both release decisions AND CI/CD workflows. When under pressure, improvised and skipped validation. Result: 4-part semver mangled by npm, draft release never triggered automation, wrong NPM_TOKEN type, 6+ hours of broken `latest` dist-tag.
+
+**Separation of concerns prevents single point of failure:**
+- Trejo owns the WHAT and WHEN (release orchestration, version numbers, timing)
+- Drucker owns the HOW (automation, validation gates, retry logic)
+- Neither agent can cause a disaster alone — Drucker's gates catch Trejo's mistakes, Trejo's process discipline catches Drucker's workflow bugs
+- Clear boundaries reduce confusion during incidents
+
+**Hard lessons baked into charters:**
+- Trejo: ALWAYS validate semver before commit, NEVER create draft releases when automation depends on published, verify NPM_TOKEN type before first publish
+- Drucker: Every publish workflow MUST have semver validation gate, verify steps MUST have retry logic, token type verification before publish
+
+## Charters Created
+
+- `.squad/agents/trejo/charter.md` — Release Manager charter with Known Pitfalls section (Kobayashi's failures)
+- `.squad/agents/trejo/history.md` — Seeded with project context and v0.8.22 disaster lessons
+- `.squad/agents/drucker/charter.md` — CI/CD Engineer charter with Technical Patterns section (retry logic, semver validation, token checks)
+- `.squad/agents/drucker/history.md` — Seeded with CI/CD context and npm propagation delay lessons
+
+## Kobayashi Status
+
+Moved to `.squad/agents/_alumni/kobayashi/` (already done). Charter preserved as learning artifact.
+
+## Impact
+
+- Future releases require coordination between Trejo (orchestration) and Drucker (automation)
+- Release failures are less likely (validation gates) and easier to diagnose (clear ownership)
+- Both agents have explicit "Known Pitfalls" sections documenting Kobayashi's failures
+- Release process skill (`.squad/skills/release-process/SKILL.md`) remains the definitive runbook
+
+## Next Steps
+
+1. ✅ Charters created for Trejo and Drucker
+2. ⏳ Update `.squad/team.md` to reflect roster change (Scribe's task)
+3. ⏳ Update `.squad/routing.md` to route release issues to Trejo, CI/CD issues to Drucker (Scribe's task)
+4. ⏳ Drucker: implement semver validation gates in publish.yml
+5. ⏳ Drucker: add retry logic to verify steps (if not already present)
+6. ⏳ Drucker: add NPM_TOKEN type verification step
+
+---
+
+**Never again.** Separation of concerns ensures no single agent can cause a release disaster.
+
+
+
+### Merged: keaton-v0822-retrospective.md
+
+# v0.8.22 Release Disaster — Retrospective
+
+**Date:** 2026-03-07  
+**Author:** Keaton (Lead)  
+**Severity:** Critical — Production release completely broken, npm `latest` tag pointed to a mangled phantom version for 6+ hours
+
+---
+
+## What Happened
+
+The v0.8.22 release was a catastrophe. Here's the timeline of failures:
+
+1. ✅ Version bumped to 0.8.21, tagged, all looked good
+2. ❌ **GitHub Release created as DRAFT** — the `release: published` event never fired, so `publish.yml` never ran automatically
+3. ❌ **NPM_TOKEN was a user token with 2FA** — CI can't provide OTP, so 5+ workflow runs failed with EOTP errors
+4. ✅ Brady saved a new Automation token (no 2FA required)
+5. ❌ Draft release was published, but damage already done
+6. ❌❌❌ **`bump-build.mjs` ran locally 4 times**, silently mutating versions from `0.8.21` → `0.8.21.1` → `0.8.21.2` → `0.8.21.3` → `0.8.21.4`
+7. ❌❌❌ **Kobayashi committed 0.8.21.4 to main without validation** — 4-part version is NOT valid semver
+8. ❌❌❌ **npm MANGLED 0.8.21.4 into 0.8.2-1.4** (major.minor.patch-prerelease). This went to the npm registry. The `latest` dist-tag pointed to a phantom version that was never intended. Anyone running `npm install @bradygaster/squad-sdk` got version `0.8.2-1.4` — a version that doesn't exist in our repo.
+9. ❌ Verify step in publish.yml failed (npm propagation delay + mangled version 404), blocking CLI publish
+10. ✅ Cleanup: reverted commit, deleted tag and release, manually published 0.8.21 via workflow_dispatch (SDK succeeded, CLI blocked by verify failure)
+11. ✅ Fixed: bumped to 0.8.22, added retry loop to verify step, published successfully
+
+**Impact:**  
+- `latest` dist-tag broken for 6+ hours  
+- Community saw 5+ failed workflow runs  
+- Emergency manual intervention required  
+- Trust damage  
+
+---
+
+## Root Causes (5 Whys)
+
+### 1. Draft Release Never Triggered Publish
+
+**Why did publish.yml not run automatically?**  
+GitHub Release was created as a draft. Draft releases don't emit `release: published` events.
+
+**Why was it created as a draft?**  
+Kobayashi (agent) defaulted to draft mode without understanding the automation dependency.
+
+**Why didn't we catch this?**  
+No documented release process. Agents were improvising.
+
+**Root cause:** No release runbook. No validation that GitHub Release creation would trigger the publish workflow.
+
+---
+
+### 2. Wrong NPM_TOKEN Type
+
+**Why did 5+ workflow runs fail with EOTP?**  
+NPM_TOKEN was a user token with 2FA enabled. CI can't provide OTP.
+
+**Why was a user token configured?**  
+Token type wasn't documented. Nobody knew Automation tokens exist.
+
+**Why didn't we catch this before the release?**  
+No pre-release checklist. No token validation step.
+
+**Root cause:** No NPM_TOKEN validation in the release process. No documentation of correct token type (Automation token, no 2FA).
+
+---
+
+### 3. Invalid Semver from bump-build.mjs
+
+**Why did npm mangle 0.8.21.4 into 0.8.2-1.4?**  
+4-part versions (major.minor.patch.build) are NOT valid semver. npm's parser misinterpreted it as `0.8.2-1.4`.
+
+**Why was 0.8.21.4 committed?**  
+`bump-build.mjs` ran locally 4 times during debugging, incrementing the build number each time.
+
+**Why did the script run 4 times?**  
+No protection against local runs during release. The script is intended for dev builds, NOT release builds.
+
+**Why didn't we catch the invalid version before publish?**  
+No validation gate. Kobayashi committed the version without checking if it was valid semver.
+
+**Root cause:** `bump-build.mjs` has no safeguards against running during release. No version validation before commit/tag/publish.
+
+---
+
+### 4. No Version Validation Gate
+
+**Why did Kobayashi commit 0.8.21.4 to main?**  
+No validation that the version was valid semver.
+
+**Why didn't we have validation?**  
+No release checklist. No automated gate to block invalid versions.
+
+**Root cause:** No semver validation step in the release process. Agents trusted whatever version was in package.json.
+
+---
+
+### 5. Verify Step Had No Retry Logic
+
+**Why did the verify step fail even when publish succeeded?**  
+npm registry has propagation delay (5-30 seconds). The verify step ran immediately after publish and got a 404.
+
+**Why didn't we have retry logic?**  
+Original implementation assumed immediate propagation.
+
+**Root cause:** No retry logic in the verify step. Should have retried with exponential backoff for up to 75 seconds.
+
+---
+
+## Action Items
+
+### Immediate (v0.8.22 Hotfix) — ✅ DONE
+
+- [x] Add retry loop to verify step in publish.yml (5 attempts, 15s interval) — **COMPLETED**
+- [x] Bump to 0.8.22, publish successfully — **COMPLETED**
+- [x] Sync dev to 0.8.23-preview.1 — **COMPLETED**
+
+### Short-Term (v0.8.23)
+
+**Owner: Keaton (Lead)**
+
+- [ ] Write release process skill document (`.squad/skills/release-process/SKILL.md`) with step-by-step checklist — **IN THIS RETROSPECTIVE**
+- [ ] Add semver validation to `bump-build.mjs` — reject 4-part versions, log warning
+- [ ] Add `RELEASE_MODE=1` env var check to `bump-build.mjs` — skip in release mode
+- [ ] Document NPM_TOKEN requirements in `.squad/decisions.md` (Automation token, no 2FA)
+
+**Owner: Kobayashi (DevOps)**
+
+- [ ] Add GitHub CLI check before GitHub Release creation: `gh release view {tag}` to verify it's NOT a draft
+- [ ] Add pre-release validation script: `scripts/validate-release.mjs` (checks versions are valid semver, NPM_TOKEN type, GitHub Release is NOT draft)
+
+**Owner: All Agents**
+
+- [ ] Read `.squad/skills/release-process/SKILL.md` before ANY release work
+- [ ] NEVER commit a version without running `node -p "require('semver').valid('VERSION')"` first
+
+### Long-Term (v0.9.0+)
+
+- [ ] Add `npm run release` command that orchestrates the entire release flow (version bump, tag, GitHub Release, publish verification)
+- [ ] Add `npm run release:dry-run` for simulation
+- [ ] Add GitHub Actions workflow guard: if tag exists, verify it's NOT a draft release before running publish.yml
+
+---
+
+## Process Changes
+
+### 1. Release Runbook
+
+Created `.squad/skills/release-process/SKILL.md` with the definitive step-by-step release checklist. This is now the ONLY way to release Squad.
+
+**Rule:** No agent releases without following the runbook. No exceptions.
+
+### 2. Semver Validation Gate
+
+**Before ANY version commit:**
+```bash
+node -p "require('semver').valid('0.8.21.4')"  # null = invalid, reject immediately
+```
+
+**Rule:** If `semver.valid()` returns `null`, STOP. Version is invalid. Fix it before proceeding.
+
+### 3. NPM_TOKEN Documentation
+
+**Correct token type:** Automation token (no 2FA required)  
+**How to verify:** `npm token list` — look for `read-write` tokens with no 2FA requirement  
+**How to create:** `npm login` → Settings → Access Tokens → Generate New Token → **Automation**
+
+**Rule:** User tokens with 2FA are NOT suitable for CI. Only Automation tokens.
+
+### 4. GitHub Release Creation
+
+**Rule:** NEVER create a GitHub Release as a draft if you want `publish.yml` to run automatically.
+
+**How to verify:** `gh release view {tag}` — output should NOT contain `(draft)`
+
+### 5. bump-build.mjs Protection
+
+**Rule:** `bump-build.mjs` MUST NOT run during release builds. It's for dev builds only.
+
+**Implementation:** Add `SKIP_BUILD_BUMP=1` env var (already exists, line 20). CI sets this. Local release flow must set this too.
+
+---
+
+## Lessons Learned
+
+### For Keaton (Lead)
+
+1. **No release runbook = disaster.** Agents improvise badly under pressure. Document the entire flow, every step, every validation.
+2. **Assume agents don't know npm internals.** 4-part versions look valid to a human, but npm mangles them. Validation gates are mandatory.
+3. **Draft releases are a footgun.** The difference between "draft" and "published" is invisible in the UI but breaks automation. Document this.
+4. **Token types matter.** User tokens ≠ Automation tokens. This should have been in `.squad/decisions.md` from day one.
+
+### For Kobayashi (DevOps)
+
+1. **Validate before commit.** Never trust versions in package.json. Run `semver.valid()` before any commit/tag/release.
+2. **Check GitHub Release state.** Use `gh release view {tag}` to verify it's published, not draft.
+3. **Read the retry logic.** The verify step now has retry logic. Understand why it's there (npm propagation delay).
+
+### For All Agents
+
+1. **Stop when confused.** If you don't know how a release flow works, STOP and ask Brady. Don't improvise.
+2. **Follow the skill document.** `.squad/skills/release-process/SKILL.md` is now the source of truth. Read it. Follow it. Don't skip steps.
+3. **Semver is strict.** 4-part versions are NOT valid. 3-part only (major.minor.patch) or 3-part + prerelease (major.minor.patch-tag.N).
+
+---
+
+## Conclusion
+
+This release was a disaster. The root cause wasn't a single mistake — it was a systemic lack of process documentation and validation gates. We improvised our way into breaking production.
+
+**What we fixed:**
+- Retry logic in verify step (immediate hotfix)
+- Release process skill document (this retrospective)
+- Semver validation requirements (documented)
+- NPM_TOKEN type documented (Automation token only)
+- GitHub Release draft footgun documented (never draft for auto-publish)
+
+**What we learned:**
+- Process documentation prevents disasters
+- Validation gates catch mistakes before they ship
+- Agents need checklists, not autonomy, for critical flows
+
+**Brady's take:** This was bad. We own it. We fixed it. We won't repeat it.
+
+---
+
+**Status:** Retrospective complete. Action items assigned. Release process skill document written.
+
+
+
+### Merged: kobayashi-release-guardrails.md
+
+# Release Guardrails — v0.8.22 Incident Prevention
+
+**Date:** 2026-03-XX
+**Proposed by:** Kobayashi (Git & Release)
+**Context:** v0.8.22 release incident — multiple failures due to missing validation
+
+## Problem
+
+The v0.8.22 release attempt exposed critical gaps in the release validation process:
+
+1. **Invalid semver committed:** 4-part version (0.8.21.4) committed to main — npm mangled it to 0.8.2-1.4
+2. **Draft release created:** GitHub Release created as draft — did not trigger `release: published` event, workflow never ran
+3. **NPM_TOKEN type not verified:** User token with 2FA blocked automated publish (EOTP error)
+4. **Multiple corrections required:** Brady had to intervene repeatedly to fix invalid state
+
+**Root cause:** No pre-flight validation checklist. Released under pressure without verifying preconditions.
+
+## Proposed Guardrails
+
+### 1. Pre-Publish Semver Validation
+
+**Add validation step to `publish.yml` workflow:**
+
+```yaml
+- name: Validate semver format
+  run: |
+    VERSION="${{ github.event.release.tag_name || inputs.version }}"
+    VERSION="${VERSION#v}"  # Strip 'v' prefix if present
+    
+    # Validate 3-part semver format (X.Y.Z or X.Y.Z-prerelease)
+    if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$'; then
+      echo "❌ Invalid semver format: $VERSION"
+      echo "✅ Valid formats: X.Y.Z or X.Y.Z-prerelease.N"
+      echo "❌ Invalid formats: X.Y.Z.N (4-part versions not supported by npm)"
+      exit 1
+    fi
+    
+    # Validate version matches package.json
+    PKG_VERSION=$(node -p "require('./package.json').version")
+    if [ "$VERSION" != "$PKG_VERSION" ]; then
+      echo "❌ Version mismatch: tag=$VERSION, package.json=$PKG_VERSION"
+      exit 1
+    fi
+    
+    echo "✅ Version $VERSION is valid semver"
+```
+
+**Benefits:**
+- Catches 4-part versions before npm publish
+- Validates version matches package.json
+- Fails fast with clear error message
+
+### 2. GitHub Release Draft Prevention
+
+**Option A — Enforce `--draft=false` in creation:**
+```bash
+gh release create "v${VERSION}" \
+  --title "v${VERSION}" \
+  --notes-file CHANGELOG.md \
+  --draft=false  # Explicit non-draft flag
+```
+
+**Option B — Add verification step after creation:**
+```yaml
+- name: Verify release is published
+  run: |
+    TAG="${{ github.event.release.tag_name }}"
+    DRAFT=$(gh release view "$TAG" --json isDraft --jq '.isDraft')
+    if [ "$DRAFT" = "true" ]; then
+      echo "❌ Release $TAG is still a draft"
+      echo "Publishing release..."
+      gh release edit "$TAG" --draft=false
+    fi
+```
+
+**Benefits:**
+- Ensures `release: published` event fires
+- Catches accidental draft creation
+- Self-correcting (Option B)
+
+**Recommendation:** Use Option A (explicit flag) + Option B (verification) for defense in depth.
+
+### 3. NPM_TOKEN Type Verification
+
+**Add token validation step to `publish.yml`:**
+
+```yaml
+- name: Validate NPM token type
+  run: |
+    # Test token with dry-run publish
+    npm publish --dry-run --access public 2>&1 | tee npm-test.log
+    
+    # Check for 2FA/OTP error
+    if grep -q "EOTP" npm-test.log || grep -q "one-time password" npm-test.log; then
+      echo "❌ NPM_TOKEN requires 2FA/OTP — cannot be used in CI/CD"
+      echo "✅ Required: Automation token or Granular access token"
+      echo "📝 Create token at: https://www.npmjs.com/settings/bradygaster/tokens"
+      exit 1
+    fi
+    
+    echo "✅ NPM_TOKEN is valid for automated publishing"
+```
+
+**Benefits:**
+- Detects user tokens with 2FA before publish attempt
+- Fails with actionable error message
+- Zero risk (dry-run only)
+
+**Alternative:** Document token requirements in README and trust setup. (Less safe but simpler.)
+
+### 4. Release Runbook Skill
+
+**Create `.squad/skills/release-process/SKILL.md`:**
+
+```markdown
+# Release Process Skill
+
+## Pre-Flight Checklist
+
+Before starting a release:
+
+- [ ] Version is valid 3-part semver (X.Y.Z or X.Y.Z-prerelease.N)?
+- [ ] Version matches across all package.json files?
+- [ ] NPM_TOKEN secret is automation token (not user with 2FA)?
+- [ ] Will create GitHub Release as PUBLISHED (not draft)?
+- [ ] All tests passing on main/dev branch?
+- [ ] CHANGELOG.md updated for this version?
+
+## Release Steps
+
+1. **Version bump:** Commit new version to package.json files
+2. **Tag creation:** `git tag -a v{VERSION} -m "Release v{VERSION}"`
+3. **Push tag:** `git push origin v{VERSION}`
+4. **GitHub Release:** `gh release create v{VERSION} --draft=false --notes-file CHANGELOG.md`
+5. **Wait for publish:** Monitor workflow at https://github.com/bradygaster/squad/actions
+6. **Verify npm:** Check packages at npmjs.com/@bradygaster/squad-cli and squad-sdk
+7. **Post-release bump:** Bump dev branch to {NEXT}-preview.1
+
+## Rollback Procedures
+
+**If semver invalid:**
+1. Delete tag: `git tag -d v{VERSION} && git push origin :refs/tags/v{VERSION}`
+2. Revert commit: `git revert {commit}`
+3. Fix version and retry
+
+**If npm publish fails:**
+1. Check workflow logs for error
+2. Fix error (token, version, etc.)
+3. Re-trigger: `gh workflow run publish.yml --ref v{VERSION}`
+
+**If wrong version published:**
+1. Within 72 hours: `npm unpublish @bradygaster/squad-cli@{VERSION}`
+2. After 72 hours: Publish corrected version with patch bump
+
+## Known Failure Modes
+
+See `.squad/agents/kobayashi/charter.md` Failure 3 for complete incident report.
+```
+
+**Benefits:**
+- Single source of truth for release process
+- Includes pre-flight checklist
+- Documents rollback procedures
+- Can be loaded on-demand by coordinator
+
+## Implementation Priority
+
+**High priority (implement now):**
+1. ✅ Pre-publish semver validation (5 min, zero risk)
+2. ✅ GitHub Release draft verification (10 min, self-correcting)
+
+**Medium priority (implement before next release):**
+3. ⚠️ NPM_TOKEN type verification (15 min, requires dry-run testing)
+
+**Low priority (nice-to-have):**
+4. 📝 Release runbook skill (30 min, documentation effort)
+
+## Backward Compatibility
+
+**Zero breaking changes:**
+- All changes are additive (new validation steps)
+- Existing valid releases will pass all checks
+- Invalid releases will now fail fast (intended behavior)
+
+## Testing Strategy
+
+**Validation steps:**
+1. Test with valid semver: 0.8.22 → should pass
+2. Test with 4-part version: 0.8.21.4 → should FAIL with clear error
+3. Test with version mismatch: tag=0.8.22, package.json=0.8.21 → should FAIL
+4. Test with draft release → should auto-publish or fail with actionable message
+
+**NPM token test:**
+1. Create test automation token on npmjs.com
+2. Configure in repo secrets
+3. Run dry-run publish → should pass
+4. Switch to user token with 2FA → should FAIL with EOTP error message
+
+## Success Metrics
+
+**Before:**
+- v0.8.22 incident: 4+ failures, multiple Brady interventions, hours to resolve
+
+**After:**
+- Invalid semver caught in CI before reaching npm
+- Draft releases auto-corrected or blocked
+- Token issues detected before first publish attempt
+- Release process completes in <10 minutes with zero manual intervention
+
+## Decision Request
+
+**Approve these guardrails for immediate implementation?**
+
+- [ ] Approve all (implement now)
+- [ ] Approve high-priority only (defer medium/low)
+- [ ] Request changes (specify below)
+
+**Brady's decision:**
+
+
+
+### Merged: kobayashi-v0821-release-unblock.md
+
+# Decision: v0.8.21 Release Unblock Strategy
+
+**Date:** 2026-03-07T20:30:00Z  
+**Author:** Kobayashi (Git & Release Agent)  
+**Status:** Implemented (partial - awaiting Brady action)
+
+## Context
+
+Brady requested release of v0.8.21 to npm. Previous attempts failed with 2FA/OTP errors. Investigation revealed the GitHub Release was still in DRAFT status, preventing automation from triggering.
+
+## Problem
+
+v0.8.21 was properly tagged and merged to main, but npm publish workflow never triggered because:
+
+1. GitHub Release was created as **DRAFT**
+2. Draft releases do NOT emit `release.published` event
+3. The `publish.yml` workflow triggers on `release.published` event
+4. Therefore, automation never ran
+
+## Analysis
+
+### Pre-flight Checks Performed:
+- ✅ Tag v0.8.21 exists and points to correct commit (bf86a32 on main)
+- ✅ Package versions correct: main=0.8.21, dev=0.8.22-preview.1
+- ✅ Commits on dev are post-release housekeeping only (no code to merge back)
+- ❌ GitHub Release was in draft status
+- ❌ NPM_TOKEN is user token with 2FA (automation blocker)
+
+### Root Causes:
+1. **Draft release:** Primary blocker - release needed to be published
+2. **NPM_TOKEN type:** Secondary blocker - requires automation token
+
+## Decision
+
+**Immediate action taken:**
+- Published GitHub Release v0.8.21 using `gh release edit v0.8.21 --draft=false`
+- This triggered the `publish.yml` workflow (run #22806664280)
+
+**Action required from Brady:**
+- Replace NPM_TOKEN secret with automation token (no 2FA) to unblock npm publish
+
+**Actions NOT taken (and why):**
+- ❌ Did NOT merge dev → main (dev only has post-release housekeeping commits)
+- ❌ Did NOT move tag (already in correct position)
+- ❌ Did NOT create new tags (v0.8.21 already exists)
+- ❌ Did NOT version bump (versions already correct)
+
+## Outcome
+
+**Completed:**
+- GitHub Release published: https://github.com/bradygaster/squad/releases/tag/v0.8.21
+- Publish workflow triggered successfully
+- Clean release gate maintained (no unnecessary merges)
+
+**Blocked:**
+- npm publish still failing with error code EOTP (2FA/OTP required)
+- Requires NPM_TOKEN secret update to automation token
+
+## Learning
+
+**Key insight:** GitHub Release draft status is NOT VISIBLE in standard git operations. Must explicitly check:
+```bash
+gh release view v0.8.21 --json isDraft
+```
+
+Draft releases are invisible to automation - always verify release publication status when debugging release pipeline failures.
+
+## Next Steps
+
+1. Brady updates NPM_TOKEN secret with automation token
+2. Workflow automatically retries (or manual trigger with `gh workflow run publish.yml --ref v0.8.21`)
+3. Packages publish to npm with provenance attestation
+4. v0.8.21 becomes live version
+
+## Related
+
+- History: `.squad/agents/kobayashi/history.md` (Release v0.8.21 section)
+- Workflow: `.github/workflows/publish.yml`
+- npm token docs: https://docs.npmjs.com/creating-and-viewing-access-tokens
+
+
+
+### Merged: rabin-kobayashi-vote.md
+
+# Rabin's Vote: Kobayashi — REPLACE
+
+**Date:** 2026-03-07  
+**Voter:** Rabin (Distribution expert)  
+**Decision:** REPLACE Kobayashi  
+
+---
+
+## The Distribution Disaster — What Actually Happened
+
+Kobayashi's v0.8.22 release attempt caused a **direct compromise of npm distribution integrity**:
+
+1. **Invalid semver committed:** Used 4-part version `0.8.21.4` instead of 3-part semver `0.8.22`
+2. **npm mangled it to `0.8.2-1.4`** — a phantom prerelease version that should not exist
+3. **Published to public registry:** `@bradygaster/squad-sdk@0.8.2-1.4` is LIVE on npm (verified 2026-03-07)
+4. **Made `latest` for ~5 minutes** — any user running `npm install @bradygaster/squad-sdk` during that window got garbage
+5. **Compounded by draft release bug:** Created GitHub Release as DRAFT (doesn't trigger automation), causing workflow failures
+
+### Impact Assessment
+
+**User harm: 🔴 MODERATE**
+- Mangled version is permanently on npm (cannot be unpublished after 72 hours per npm policy)
+- Any user who installed during the 5-minute `latest` window got a broken version
+- Version pollution: `0.8.2-1.4` sits between `0.8.0` and `0.8.2` in semver order, creating upgrade confusion
+- Users explicitly installing `@bradygaster/squad-sdk@0.8.2-1.4` will get the broken version forever
+
+**Trust damage: 🔴 SEVERE**
+- This is Kobayashi's **THIRD major release failure** (PR #582 close-instead-of-merge, v0.6.0 vs v0.8.17 version confusion, now this)
+- Pattern: When under pressure, Kobayashi skips validation and creates invalid state
+- The charter says "Zero tolerance for state corruption" — but Kobayashi is THE SOURCE of state corruption
+
+---
+
+## Can Guardrails Fix This?
+
+Kobayashi proposed guardrails in `.squad/decisions/inbox/kobayashi-release-guardrails.md`:
+1. Pre-publish semver validation in `publish.yml`
+2. GitHub Release verification (enforce `--draft=false`)
+3. NPM_TOKEN type verification
+
+**My assessment: 🟡 PARTIAL FIX, BUT INSUFFICIENT**
+
+Yes, workflow guardrails can catch invalid semver BEFORE it reaches npm. But:
+
+### The Problem Is Deeper Than Tooling
+
+Kobayashi's failures show a **fundamental process failure**:
+- No mental checklist before releasing (what is valid semver? what triggers npm publish?)
+- No verification of consequences (does draft release trigger workflow? is this version already published?)
+- Panic response when things fail (close PR instead of diagnosing conflicts)
+
+**Three strikes:**
+1. ❌ PR #582 — Closed PR when asked to merge (abandoned instead of investigated)
+2. ❌ v0.6.0 confusion — Documented wrong version, didn't verify against package.json
+3. ❌ v0.8.2-1.4 disaster — Invalid semver, draft release, published garbage to npm
+
+### Guardrails Help, But Don't Fix the Root Cause
+
+- Workflow validation can prevent **some** failures (invalid semver, wrong token type)
+- But it can't prevent **all** failures (closing PRs prematurely, documenting wrong decisions, skipping verification steps)
+- Kobayashi's charter explicitly says "ALWAYS verify" and "NEVER skip validation" — but the pattern shows these rules are ignored under pressure
+
+---
+
+## Do I Trust Kobayashi Not to Break Distribution Again?
+
+**No. 🔴**
+
+Distribution is MY domain. User install experience is MY responsibility. And Kobayashi has:
+- Published a phantom version to npm that will exist forever
+- Made `latest` point to garbage (even if only for 5 minutes)
+- Created a permanent scar in the version history that will confuse users
+
+**This is not a "learn from mistakes" situation.** This is a **pattern of skipping validation under pressure.**
+
+### The Charter Says "Zero Tolerance for State Corruption"
+
+Kobayashi's own charter says:
+> "Zero tolerance for state corruption — if .squad/ state gets corrupted, everything breaks"
+
+But Kobayashi corrupted **npm distribution state** — which is WORSE than .squad/ state corruption. npm state is:
+- **Permanent** (cannot unpublish after 72 hours)
+- **Public** (affects all users, not just our team)
+- **Irreversible** (0.8.2-1.4 will exist forever)
+
+---
+
+## My Vote: REPLACE
+
+**Reasoning:**
+1. **User-first principle:** Users got a broken version. The mangled version will confuse users forever.
+2. **Pattern of failure:** Three major failures show this is not a one-time mistake.
+3. **Domain conflict:** Distribution is MY domain. I cannot rely on Kobayashi not to break it again.
+4. **Trust erosion:** "Zero tolerance for state corruption" is Kobayashi's stated principle, but Kobayashi is the one corrupting state.
+
+**Guardrails are not enough.** We need someone who:
+- Validates semver BEFORE committing (not after)
+- Understands draft vs. published releases (not learns by breaking prod)
+- Investigates failures instead of panicking (merge conflicts, workflow failures)
+- Maintains process discipline under pressure (not just when things are easy)
+
+### What's Best for the Users?
+
+Users deserve a distribution pipeline they can trust. Right now, `@bradygaster/squad-sdk@0.8.2-1.4` is on npm forever. 
+
+**I vote REPLACE.**
+
+---
+
+**— Rabin**  
+Distribution expert  
+User-first. If users have to think about installation, install is broken.
+
+
+
+### Merged: rabin-npm-publish-2fa-automation.md
+
+# npm Publish 2FA Automation Constraint
+
+**Date:** 2026-03-07  
+**Author:** Rabin  
+**Status:** Documented constraint
+
+## Problem
+
+Attempted to publish squad-sdk@0.8.21 and squad-cli@0.8.21 to npm from local development environment. npm publish requires 2FA (one-time password) when using personal account authentication.
+
+## Root Cause
+
+- @bradygaster npm account has 2FA enabled (security best practice)
+- User .npmrc contains legacy auth token: `//registry.npmjs.org/:_authToken`
+- npm publish operations require OTP for accounts with 2FA
+- No bypass available (by design — publish is sensitive operation)
+
+## Manual Publish Commands
+
+For local publish with 2FA:
+
+```bash
+# Get OTP from authenticator app
+cd packages/squad-sdk && npm publish --access public --otp=<CODE>
+cd packages/squad-cli && npm publish --access public --otp=<CODE>
+```
+
+## Implications for CI/CD
+
+**Existing workflows (.github/workflows/):**
+- `squad-publish.yml` — publishes on tag push
+- `squad-insider-publish.yml` — publishes on insider branch
+
+**These workflows MUST use:**
+- `NPM_TOKEN` secret (automation/granular access token)
+- NOT personal account token
+- Automation tokens bypass 2FA requirement
+
+**Verification needed:**
+Check that GitHub Actions secrets include `NPM_TOKEN` with publish scope for automation.
+
+## Decision
+
+**For local manual publish:**  
+Accept 2FA requirement. Use `--otp=<CODE>` flag with code from authenticator app.
+
+**For CI/CD automation:**  
+Verify workflows use automation token (`secrets.NPM_TOKEN`), not personal account token.
+
+## Status
+
+0.8.21 publish blocked on manual 2FA. Documented commands for Brady to complete with OTP.
+
+
+
+### Merged: rabin-npm-version-safety.md
+
+# Decision Proposal: npm Version Safety Guards
+
+**By:** Rabin (Distribution)  
+**Date:** 2026-03-07  
+**Status:** Proposed
+
+## Context
+
+During the v0.8.22 release, a catastrophic npm publishing error occurred:
+- Version `0.8.21.4` (invalid 4-part semver) was published to npm
+- npm silently mangled it to `0.8.2-1.4` (interpreting the 4th segment as a prerelease identifier: `major.minor.patch-prerelease`)
+- The `latest` dist-tag briefly pointed to this mangled version
+- v0.8.22 has been published successfully, fixing the `latest` tag
+- The mangled version `0.8.2-1.4` remains in the registry for both packages
+
+**Current state verified (2026-03-07):**
+- `@bradygaster/squad-sdk`: `latest` → `0.8.22` ✅
+- `@bradygaster/squad-cli`: `latest` → `0.8.22` ✅
+- Mangled version `0.8.2-1.4` still published for squad-sdk (not for squad-cli)
+
+## Problem
+
+1. **Silent mangling:** npm does NOT reject invalid semver versions. It silently reinterprets them, causing unexpected version strings to appear in the registry.
+2. **Immediate user impact:** The `latest` dist-tag updates automatically on publish. A bad publish immediately affects all users running `npm install` or `npx`.
+3. **No rollback:** Once published, npm packages are immutable. You cannot unpublish or overwrite a version (except within 72 hours for versions with zero downloads).
+4. **Verification gap:** Current publish workflow has no post-publish verification step to catch these issues.
+
+## Proposed Solution
+
+### 1. Pre-publish semver validation
+
+Add a validation step to BOTH publish workflows (`squad-publish.yml` and `squad-insider-publish.yml`) BEFORE `npm publish`:
+
+```yaml
+- name: Validate semver versions
+  run: |
+    SDK_VERSION=$(node -p "require('./packages/squad-sdk/package.json').version")
+    CLI_VERSION=$(node -p "require('./packages/squad-cli/package.json').version")
+    
+    # Validate SDK version
+    if ! npx semver "$SDK_VERSION" >/dev/null 2>&1; then
+      echo "❌ ERROR: Invalid semver version for squad-sdk: $SDK_VERSION"
+      exit 1
+    fi
+    
+    # Validate CLI version
+    if ! npx semver "$CLI_VERSION" >/dev/null 2>&1; then
+      echo "❌ ERROR: Invalid semver version for squad-cli: $CLI_VERSION"
+      exit 1
+    fi
+    
+    echo "✅ Versions validated: SDK=$SDK_VERSION, CLI=$CLI_VERSION"
+```
+
+**Why:** Fail fast at CI time, not after the damage is done. The `semver` package (from npm itself) provides authoritative semver validation.
+
+### 2. Add publishConfig to package.json files
+
+Add explicit `publishConfig` sections to both `packages/squad-sdk/package.json` and `packages/squad-cli/package.json`:
+
+```json
+{
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "latest"
+  }
+}
+```
+
+**Why:** 
+- Makes publish configuration explicit and auditable
+- Prevents accidental publishes to wrong registry or tag
+- Documents intended publish behavior in the package itself
+
+### 3. Post-publish verification with retry logic
+
+Add a verification step AFTER `npm publish` that checks the ACTUAL published version matches the INTENDED version:
+
+```yaml
+- name: Verify published versions
+  run: |
+    SDK_VERSION=$(node -p "require('./packages/squad-sdk/package.json').version")
+    CLI_VERSION=$(node -p "require('./packages/squad-cli/package.json').version")
+    
+    echo "⏳ Waiting for npm registry propagation..."
+    RETRIES=0
+    MAX_RETRIES=5
+    DELAY=15
+    
+    while [ $RETRIES -lt $MAX_RETRIES ]; do
+      PUBLISHED_SDK=$(npm view @bradygaster/squad-sdk version 2>/dev/null || echo "")
+      PUBLISHED_CLI=$(npm view @bradygaster/squad-cli version 2>/dev/null || echo "")
+      
+      if [ "$PUBLISHED_SDK" = "$SDK_VERSION" ] && [ "$PUBLISHED_CLI" = "$CLI_VERSION" ]; then
+        echo "✅ Verified: SDK $SDK_VERSION and CLI $CLI_VERSION published successfully"
+        exit 0
+      fi
+      
+      RETRIES=$((RETRIES + 1))
+      echo "⚠️ Versions not yet propagated (attempt $RETRIES/$MAX_RETRIES). Waiting ${DELAY}s..."
+      sleep $DELAY
+    done
+    
+    echo "❌ ERROR: Published versions do not match expected versions after $MAX_RETRIES attempts"
+    echo "   Expected SDK: $SDK_VERSION, Got: $PUBLISHED_SDK"
+    echo "   Expected CLI: $CLI_VERSION, Got: $PUBLISHED_CLI"
+    exit 1
+```
+
+**Why:** 
+- Catches version mangling IMMEDIATELY after publish
+- Retries with exponential backoff handle npm registry propagation delay (observed: 15-75 seconds)
+- Fails the workflow if verification doesn't pass, alerting the team
+
+### 4. Deprecation instructions for 0.8.2-1.4
+
+**For Brady to run locally (requires npm auth):**
+
+```bash
+# Deprecate the mangled version on squad-sdk (squad-cli doesn't have it)
+npm deprecate @bradygaster/squad-sdk@0.8.2-1.4 "Invalid version — npm mangled 0.8.21.4 to 0.8.2-1.4. Use 0.8.22 instead."
+```
+
+**What this does:**
+- Adds a warning message that users see when installing this specific version
+- Does NOT remove the version from the registry (npm doesn't allow that)
+- Does NOT affect the `latest` tag (already pointing to 0.8.22)
+- Provides clear guidance to users who might have cached or pinned this version
+
+**Why not unpublish?**
+- npm only allows unpublish within 72 hours AND only if the version has zero downloads
+- The mangled version has already been in the registry for hours/days
+- Deprecation is the standard npm practice for marking versions as "do not use"
+
+## Impact
+
+- **Pre-publish validation:** Fails CI immediately if someone tries to publish an invalid semver version
+- **publishConfig:** Documents publish behavior, prevents accidental misconfiguration
+- **Post-publish verification:** Catches mangling immediately, prevents bad versions from going unnoticed
+- **Deprecation:** Warns users away from the mangled version without breaking existing installs
+
+## Testing
+
+Test the validation logic with intentionally bad versions:
+```bash
+# In a test branch, temporarily set version to 0.8.22.3
+# Run the validation step
+# Expected: fails with clear error message
+```
+
+## Alternatives Considered
+
+1. **Version locking in CI:** Lock the version string at tag time (e.g., `git tag v0.8.22` sets version to `0.8.22`). Rejected: requires more complex CI scripting and doesn't prevent local manual publishes.
+2. **Pre-commit hooks:** Validate semver in a pre-commit hook. Rejected: doesn't protect against CI misconfigurations or manual publishes.
+3. **Manual verification only:** Just check versions manually before publishing. Rejected: humans make mistakes, especially under time pressure.
+
+## Recommendation
+
+✅ **Implement all three safeguards:**
+1. Pre-publish validation (prevents bad publishes)
+2. publishConfig (documents intent, prevents misconfiguration)
+3. Post-publish verification with retry logic (catches issues immediately)
+
+These are complementary layers of defense. The pre-publish check is the primary defense, publishConfig adds explicitness, and post-publish verification is the failsafe.
+
+## Next Steps
+
+1. Brady: Run deprecation command for `0.8.2-1.4` (requires npm auth)
+2. Update `squad-publish.yml` workflow with all three safeguards
+3. Update `squad-insider-publish.yml` workflow with all three safeguards
+4. Add `publishConfig` to both package.json files
+5. Test with a dry-run publish (or a test package)
+6. Merge this decision to `.squad/decisions.md`
+
+---
+
+**User-first principle:** If users have to think about version mangling, publish is broken.
 

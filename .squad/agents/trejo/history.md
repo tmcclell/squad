@@ -69,4 +69,56 @@ The definitive release runbook lives at `.squad/skills/release-process/SKILL.md`
 
 ## Learnings
 
-(This section will be populated as Trejo gains experience with releases)
+### 2026-03-07: First task — Release & GitOps audit for CI/CD PRD
+
+**Context:** Brady requested comprehensive audit of release and GitOps state to feed into CI/CD improvement PRD. Drucker auditing CI/CD pipelines separately.
+
+**What I audited:**
+1. Branching model (dev/main/insiders state, protection rules, divergent histories)
+2. Version state (main: 0.8.22, dev: 0.8.23-preview.1, npm registry consistency)
+3. Tag hygiene (33 tags total, found invalid semver tag v0.8.6.15-preview-insider+5664fd0)
+4. GitHub Releases (last 10 releases, no drafts, automated creation working)
+5. Release process gaps (post-Kobayashi disaster, automation missing)
+6. package-lock.json state (npm ci works but triggers bump-build.mjs)
+7. Workflow audit (14 active workflows, found duplicates and dead references)
+8. Branch protection rules (main protected, dev NOT protected)
+
+**Critical findings (P0):**
+1. **dev branch unprotected** — Primary integration branch has NO protection (anyone can force-push, bypass review)
+2. **Tests blocking releases** — 8 test files fail due to ESM `require()` misuse; squad-release.yml blocked
+3. **bump-build.mjs still runs in CI** — Despite `CI=true` check, version mutated during `npm ci` (0.8.22 → 0.8.22.1)
+4. **No automated semver validation** — Nothing prevents 4-part versions from being committed (root cause of v0.8.22 disaster)
+
+**Learnings:**
+1. **Live audits are dangerous** — Running `npm ci` during audit mutated 3 package.json files (had to `git checkout .` to restore)
+2. **CI=true is not enough** — bump-build.mjs checks `process.env.CI === 'true'` but still executed during npm prepare lifecycle (environment variables may not propagate to child scripts)
+3. **Branch naming matters** — Found both `insider` (stale) and `insiders` (active) branches; workflows reference `insider` but team uses `insiders` — inconsistency causes confusion
+4. **Preview branch is ghost architecture** — squad-promote.yml and squad-preview.yml reference a `preview` branch that doesn't exist; unclear if planned or abandoned
+5. **Dist-tags decay** — npm `preview` dist-tag still points to 0.8.17-preview (pre-disaster), `insider` points to 0.6.0-alpha.0 (ancient); if dist-tags aren't maintained, they mislead users
+6. **Workflow archaeology needed** — Found duplicate workflow IDs (publish.yml and squad-publish.yml both active), deprecated file exists (squad-publish.yml.deprecated), suggests rename history; need to deduplicate
+7. **Tests gate everything** — squad-release.yml runs tests before release, but tests currently fail (8/8 fail); broken tests block ALL releases, even emergency hotfixes; should separate test gate from release gate
+
+**Output:** Comprehensive audit document at `docs/proposals/cicd-gitops-prd-release-audit.md` with 8 sections, priority recommendations (P0/P1/P2), and next steps for Brady/Drucker/Trejo.
+
+**What worked:**
+- Parallel git/npm/gh commands gathered complete state snapshot efficiently
+- Reading predecessor's charter (Kobayashi) and post-mortem (v0.8.22 retrospective) provided essential context
+- Structuring audit as "Current State / Pain Points / Proposed Improvements" made findings actionable
+
+**What I'd do differently next time:**
+- Run read-only commands first, save any potentially mutating commands (npm ci, npm install) for last or skip entirely
+- Use `--dry-run` or `--help` flags when testing unfamiliar commands to avoid side effects
+- Document environment state BEFORE running commands (current branch, git status, versions) to detect mutations
+
+---
+
+## 📌 Team Update (2026-03-07T21:06:29Z): Your Role as Release Manager
+
+You were hired to replace Kobayashi. Team voted 4-0 REPLACE. Your job: CHECKLIST-FIRST releases following .squad/skills/release-process/SKILL.md. ALWAYS validate semver, NEVER draft releases, VERIFY NPM_TOKEN type.
+
+Session log: .squad/log/2026-03-07T21-06-29Z-v0822-release.md"
+
+ = 
+---
+
+ + 

@@ -168,4 +168,67 @@ env:
 
 ## Learnings
 
-(This section will be populated as Drucker gains experience with CI/CD workflows)
+### 2026-03-07: First CI/CD Audit (Post-v0.8.22)
+
+**Context:** Brady requested a comprehensive audit of all CI/CD pipelines for a PRD to "make CI/CD suck less." This is my first task as Drucker.
+
+**Key Findings:**
+
+**Critical Issues (P0):**
+1. **squad-release.yml is completely broken** — 9+ consecutive failures due to ES module syntax errors in test files. Tests use `require('node:test')` but package.json has `"type": "module"`. This is blocking ALL releases from main.
+2. **No semver validation in publish.yml** — 4-part versions can still reach npm and get mangled (same root cause as v0.8.22 disaster). Need to add `npx semver` validation step.
+3. **No SKIP_BUILD_BUMP enforcement** — publish.yml doesn't explicitly set or verify this env var, so bump-build.mjs could run during release builds.
+4. **bump-build.mjs creates invalid semver** — For non-prerelease versions (0.8.22), it creates 4-part versions (0.8.22.1) which are NOT valid semver. Should use `-build.N` suffix instead (0.8.22-build.1).
+
+**Other Issues (P1/P2):**
+- squad-ci.yml has flaky tests (human-journeys.test.ts, 12 failures)
+- No dry-run step in publish.yml (`npm publish --dry-run`)
+- No NPM_TOKEN existence check
+- squad-insider-publish.yml has same validation gaps as publish.yml
+- squad-publish.yml and squad-publish.yml.deprecated are redundant/stale
+- squad-heartbeat.yml cron is disabled (Ralph not running on schedule)
+
+**Positive Findings:**
+- Retry logic in publish.yml works well (5 attempts, 15s intervals)
+- Version matching validation exists (package.json vs. target)
+- Provenance flag enabled (good supply chain security)
+- Squad automation workflows (triage, labels, assignment) are working well
+- squad-promote.yml has good design (strips team files before release)
+
+**Pattern Recognition:**
+- **Test failures are the primary blocker** — Most workflow failures are due to broken tests, not infrastructure issues
+- **Defense in depth is missing** — Workflows assume inputs are correct, no validation gates
+- **Redundant workflows cause confusion** — squad-publish.yml vs. publish.yml need clarification
+
+**Technical Learnings:**
+1. **ES module vs. CommonJS matters in CI** — package.json `"type": "module"` affects ALL .js files, including tests. Tests must use `import` not `require`.
+2. **GitHub Actions has CI=true by default** — bump-build.mjs checks for this, so it's partially protected. But explicit SKIP_BUILD_BUMP is better.
+3. **npm registry propagation is real** — Verify steps MUST have retry logic. 5 attempts × 15s = 75s max wait (good).
+4. **Workflow naming matters** — squad-publish.yml.deprecated still exists in repo but filename says "deprecated" — delete these to avoid confusion.
+5. **Semver validation is cheap** — `npx semver "$VERSION"` is a one-line check that prevents disasters.
+
+**Recommendations for Team:**
+- **P0 blockers must be fixed before next release** — squad-release.yml test failures, semver validation, bump-build.mjs format
+- **Publish.yml needs hardening** — Add validation gates (semver, SKIP_BUILD_BUMP, dry-run, token check)
+- **Test suite needs stability** — Fix or quarantine flaky tests (human-journeys.test.ts)
+- **Clean up stale workflows** — Delete deprecated files, clarify redundant workflows
+
+**Collaboration Notes:**
+- Trejo (Release Manager) should be aware of squad-release.yml being broken — releases from main are blocked
+- Fenster (CLI Engineer) should investigate human-journeys.test.ts failures — CLI error handling may be broken
+- Keaton (Architect) should weigh in on bump-build.mjs fix (change format vs. remove script)
+
+**Next Steps:**
+- Brady will use this audit to create a PRD
+- Trejo is auditing GitOps/release side separately
+- Wait for direction on which P0 issues to fix first
+
+**Learnings Applied to Charter:**
+- Defense in depth principle confirmed — validation gates are essential
+- Retry logic pattern works (5 attempts, 15s intervals, exponential backoff)
+- Semver validation is mandatory — one-line check prevents disasters
+- SKIP_BUILD_BUMP must be enforced in CI — not just checked by script
+- Test failures are often ES module syntax issues — watch for require vs. import
+
+**Documentation Created:**
+- `docs/proposals/cicd-gitops-prd-cicd-audit.md` — Comprehensive audit with findings, priorities, code snippets

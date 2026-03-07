@@ -197,3 +197,4 @@ cd packages/squad-cli && npm publish --access public --otp=<CODE>
 
 **Status:** Prepared tarball (packages/squad-sdk/bradygaster-squad-sdk-0.8.21.tgz), documented publish commands with OTP requirement, escalated to Brady for manual completion.
 
+📌 Team update (2026-03-07T21:06:29Z): Team restructure — Kobayashi retired, Trejo (Release Manager) + Drucker (CI/CD Engineer) hired. Separation of concerns: Trejo WHAT/WHEN, Drucker HOW. 10 decisions merged. 4-0 REPLACE vote. — Scribe

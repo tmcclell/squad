@@ -887,3 +887,5 @@ pm test\: 3768 tests passed (2 pre-existing failures unrelated to changes)
 - **Key files for init flow**: cli-entry.ts (routing) → cli/core/init.ts (options assembly) → squad-sdk/config/init.ts (file generation)
 - **Migration context**: This is NOT about migrate.ts (Edie's domain) — it's about NEW squad creation, not converting existing squads
 
+
+📌 Team update (2026-03-07T21:06:29Z): Team restructure — Kobayashi retired, Trejo (Release Manager) + Drucker (CI/CD Engineer) hired. Separation of concerns: Trejo WHAT/WHEN, Drucker HOW. 10 decisions merged. 4-0 REPLACE vote. — Scribe

@@ -176,3 +176,34 @@
 - **#241** (Dedicated docs squad member) → Addressed by #208 (broader docs/knowledge consolidation)
 
 **Key principle:** These weren't "false closes" — they represent real community concerns that are being addressed through architectural decisions (SDK, charter system, CLI-first migration). Community felt acknowledged, roadmap clarity improved, backlog reduced.
+
+## 📌 CI/CD & GitOps PRD Synthesis — 2026-03-07
+
+**UNIFIED PRD CREATED.** Synthesized Trejo's GitOps/release audit (27KB) and Drucker's CI/CD pipeline audit (29KB) into single actionable PRD (docs/proposals/cicd-gitops-prd.md, ~34KB).
+
+**Synthesis Approach:**
+- **Deduplication:** Both audits identified same critical issues (squad-release.yml broken, semver validation missing, bump-build.mjs footgun, dev branch unprotected). Merged into single prioritized list.
+- **Prioritization Framework:** P0 (blocks releases) → P1 (hardening) → P2 (quality of life). 29 work items total: 5 P0, 10 P1, 14 P2.
+- **Architecture Decisions:** 5 key choices require Brady input: (1) consolidate publish.yml/squad-publish.yml, (2) delete or fix squad-release.yml, (3) bump-build.mjs behavior, (4) dev branch protection strategy, (5) preview branch architecture.
+- **Implementation Phases:** 6 phases from "unblock releases" (1-2 days) to "quality of life" (backlog). Defense-in-depth for publish pipeline.
+
+**Key Learnings from Synthesis:**
+1. **Trejo vs. Drucker alignment is high:** Both identified same P0 issues. Differences were tactical (timing, approach), not strategic.
+2. **v0.8.22 disaster exposed systemic gaps:** Not a single failure — cascade of missing validation gates. PRD adds multiple layers (pre-commit, CI, publish.yml).
+3. **Workflow inventory reveals redundancy:** 15 workflows, 3 are unclear/redundant (squad-publish.yml, preview workflows, heartbeat). Consolidation is P1.
+4. **Test failures are the blocker:** squad-release.yml has 9+ consecutive failures (ES module syntax). Fixing tests unblocks everything else.
+5. **Branch model needs clarity:** Preview branch referenced but doesn't exist. Insider/insiders naming inconsistent. Decision required: implement or remove.
+
+**What Makes This PRD Actionable:**
+- **Concrete work items:** Each has description, source, effort estimate (S/M/L), dependencies.
+- **Code snippets for fixes:** Ready-to-copy validation gates, CI checks, workflow improvements.
+- **Success criteria:** Measurable outcomes (zero invalid semver for 6 months, MTTR <1 hour, CI success rate ≥95%).
+- **Phased rollout:** Implementable in order — Phase 1 unblocks releases, Phase 2 disaster-proofs, later phases harden.
+
+**Architecture Insight — Defense-in-Depth:**
+Single validation layer failed in v0.8.22. PRD adds **3 layers**:
+1. **Pre-commit:** Semver validation before commit (hook or manual check)
+2. **CI checks:** squad-ci.yml validates versions, tests pass
+3. **Publish gates:** publish.yml validates semver, SKIP_BUILD_BUMP, dry-run before npm publish
+
+**Outcome:** 29 work items, 5 architecture decisions, 6 implementation phases. Ready for agent execution. No more v0.8.22-style disasters.
