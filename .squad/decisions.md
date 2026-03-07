@@ -5559,3 +5559,9 @@ Filed [#252](https://github.com/bradygaster/squad/issues/252) as the public RFC 
 ---
 
 
+
+### 2026-03-07T16:43Z: Remove main guard workflow
+**By:** Brady (via Copilot)
+**What:** Delete `.github/workflows/squad-main-guard.yml` entirely in v0.8.22. Squad state in repos is fine — no longer need to block `.squad/` from protected branches.
+**Why:** User directive — "i want that guard GONE in the next release. completely and totally gone." The original policy of keeping `.squad/` off main/preview is obsolete. Squad files in repos are now welcome and expected.
+
