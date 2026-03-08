@@ -177,9 +177,9 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   @apply my-8 border-surface-200 dark:border-surface-700;
 }
 
-/* Docs layout — sidebar + main scroll independently */
+/* Docs layout — sidebar sticky, page scrolls naturally */
 .docs-layout {
-  @apply flex h-[calc(100vh-3.5rem)];
+  @apply flex min-h-[calc(100vh-3.5rem)];
 }
 
 /* Sidebar styles */
