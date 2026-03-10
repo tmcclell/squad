@@ -22,7 +22,7 @@ const EXPECTED_GUIDES = ['tips-and-tricks', 'sample-prompts', 'personal-squad'];
 const EXPECTED_REFERENCE = ['cli', 'sdk', 'config'];
 
 const EXPECTED_SCENARIOS = [
-  'issue-driven-dev', 'existing-repo', 'ci-cd-integration', 'solo-dev', 'monorepo', 'team-of-humans', 'ralph-operations', 'proactive-communication',
+  'issue-driven-dev', 'existing-repo', 'ci-cd-integration', 'solo-dev', 'monorepo', 'team-of-humans',
 ];
 
 const EXPECTED_BLOG = [
