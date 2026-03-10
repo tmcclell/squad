@@ -19,10 +19,6 @@ When a reviewer (Lead, Tester) rejects work, the original agent is locked out fr
 
 ## How It Works
 
-When a reviewer (Lead, Tester) rejects an agent's work, the agent is **locked out** from self-revising. This prevents endless fix-retry loops and forces human oversight or escalation. The protocol ensures rejected work doesn't slip through without proper review.
-
-## How It Works
-
 1. **Agent submits work** — Creates draft PR, requests review from Lead or Tester.
 2. **Reviewer evaluates** — Checks code quality, test coverage, adherence to directives.
 3. **Reviewer decision:**
@@ -132,6 +128,46 @@ Lockouts are recorded in `.squad/orchestration-log/`:
 [2024-01-15 16:20:10] REVIEW: Lead approved PR #13 (author: Hockney)
 [2024-01-15 16:20:11] UNLOCK: Fenster unlocked (issue #42 resolved)
 ```
+
+## Trust Levels for PR Management
+
+This section covers the spectrum of human oversight for Squad-created PRs:
+
+### 1. Full Review (Default)
+
+Every PR requires human approval before merge. This is the default and recommended for team repos, shared codebases, and anything with external collaborators.
+
+**When to use:** Team repositories, public packages, shared codebases where multiple people depend on stability.
+
+**Risk:** Low — human gate on every change.
+
+### 2. Selective Review
+
+Squad creates and reviews PRs, but the human only reviews PRs that touch specific paths or domains they care about. Everything else merges after agent review.
+
+**When to use:** Personal projects with established patterns where you trust Squad's judgment on routine changes (dependency updates, test fixes, doc improvements).
+
+**Risk:** Medium — some changes skip human eyes.
+
+### 3. Self-Managing (Personal Repos Only)
+
+Squad creates, reviews, approves, and merges its own PRs. The human only jumps in when an issue is explicitly flagged for review.
+
+**When to use:** Solo personal projects where you're the sole maintainer and experimentation speed matters more than pre-merge safety.
+
+**Risk:** Higher — but fast; review PRs retroactively.
+
+### Decision Matrix
+
+| Trust Level | When | Risk |
+|-------------|------|------|
+| Full review | Team repos, shared codebases, public packages | Low — human gate on every change |
+| Selective review | Personal projects with established patterns | Medium — some changes skip human eyes |
+| Self-managing | Solo personal projects, experimentation | Higher — but fast; review PRs retroactively |
+
+**Important:** Self-managing mode doesn't mean unmonitored. Use Ralph's work monitoring, Teams notifications, and periodic code review to stay informed. The difference is that you review *after* merge rather than *before*.
+
+---
 
 ## Sample Prompts
 
