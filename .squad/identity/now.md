@@ -1,12 +1,12 @@
 ---
-updated_at: 2026-03-08T00:00:00Z
-focus_area: Post-v0.8.24 Stabilization
-version: v0.8.24
-branch: main
-tests_passing: 3931
+updated_at: 2026-03-15T15:50:00Z
+focus_area: Post-sprint — SDK work + remaining bugs
+version: v0.8.25-build.4
+branch: dev
+tests_passing: ~4157
 tests_todo: 46
 tests_skipped: 5
-test_files: 149
+test_files: 154
 team_size: 19 active agents + Scribe + Ralph + @copilot
 team_identity: Apollo 13 / NASA Mission Control
 process: All work through PRs. Branch naming squad/{issue-number}-{slug}. Never commit to main directly.
@@ -14,16 +14,17 @@ process: All work through PRs. Branch naming squad/{issue-number}-{slug}. Never 
 
 # What We're Focused On
 
-**Status:** v0.8.24 shipped to npm. Build clean (0 errors). Tests stable (3,931 passing, ~89s runtime). One pre-existing test failure in aspire-integration.test.ts (requires Docker). Post-release stabilization in progress. External contributor Tamir shipping major features across multiple branches.
+**Status:** Irritating bugs sprint COMPLETE. 7 issues closed, 8 PRs merged to dev, 5 community PRs merged. CI lockfile fix resolved 8-day build failure. Reskill needed, then dive into SDK work and remaining bugs.
 
 ## Current State
 
-**Version:** v0.8.24 (released, on npm)
+**Version:** v0.8.25-build.4 (on dev, not yet released)
 - **Packages:** @bradygaster/squad-sdk, @bradygaster/squad-cli
-- **Branch:** main
-- **Build:** ✅ clean (0 errors)
-- **Tests:** 3,931 passed, 46 todo, 5 skipped, 149 test files (~89s)
+- **Branch:** dev
+- **Build:** ✅ clean (0 errors, CI green)
+- **Tests:** ~4,157 passed, 46 todo, 5 skipped, ~154 test files
   - Only failure: aspire-integration.test.ts (needs Docker, pre-existing)
+  - New: docs-links.test.ts (internal link + anchor validation from diberry)
 
 **Stack:**
 - TypeScript (strict mode, ESM-only)
@@ -33,36 +34,46 @@ process: All work through PRs. Branch naming squad/{issue-number}-{slug}. Never 
 - esbuild (bundler)
 
 **Team:** Apollo 13 / NASA Mission Control
-- 19 active agents (Flight, FIDO, GNC, RETRO, CONTROL, PAO, Network, Booster, SURGEON, TELMU, EECOM, GUIDO, CAPCOM, FAO, INCO, Procedures, FLIGHT_DYNAMICS, Experiments, Trajectory)
-- Scribe (orchestration historian)
-- Ralph (autonomous triage watchdog)
-- @copilot (coding agent)
+- 19 active agents + Scribe + Ralph + @copilot
 
-## Recent Major Features (v0.8.24)
+## What Just Shipped (Irritating Bugs Sprint — 2026-03-15)
 
-- **Azure DevOps platform adapter** — Full enterprise support for ADO alongside GitHub
-- **CommunicationAdapter** — Platform-agnostic agent-human communication abstraction
-- **SubSquads** — Renamed from workstreams, clearer mental model for nested teams
-- **Secret guardrails** — Hook-based enforcement (zero-worry guarantee)
-- **ESM runtime patch** — Node 24+ compatibility fix
-- **Contributors Guide page** — Recognition and onboarding for external contributors
-- **Team rebirth** — The Usual Suspects → Apollo 13 / NASA Mission Control
+### Bug Fixes (our PRs)
+- **PR #409** — Version stamp in agent charter.md (#321)
+- **PR #411** — SDK init trio: Ralph in init (#338), config sync after cast (#337), @copilot removed from routing templates (#339)
+- **PR #412** — Base roles opt-in via `--roles` flag (#379) — @spboyer pinged
+- **PR #414** — CI lockfile fix (stale nested SDK entry caused 8-day build failure)
 
-## Active Work in Progress (Tamir's Branches)
+### Community PRs (Tamir Dresher)
+- **PR #415** — Rework rate OTEL metrics in squad-sdk (5th DORA metric)
+- **PR #381** — Rework rate CLI command (`squad rework`) — cherry-picked to dev
 
-- **`remote-control`** — PTY mirror + devtunnel for phone access (36 commits, security-hardened)
-- **`hierarchical-squad-inheritance`** — Upstream inheritance for inherited squads (6 commits)
-- **`ralph-watch`** — Persistent local watchdog polling (5 commits)
-- **`project-type-detection`** — Non-npm project support (2 commits)
-- **`prevent-git-checkout-data-loss`** — Safety guard for branch switches (2 commits)
+### Community PRs (Dina Berry)
+- **PR #389** — Docs consolidation & reduction (-1,471 net lines, closes #258/#351)
+- **PR #393** — baseBranch alignment to dev (closes #350)
+- **PR #396** — Docs quality CI (markdownlint, cspell, link validation)
 
-## Key Recent Fixes (Post v0.8.24)
+### Issues Closed
+#321, #337, #338, #339, #348, #356, #379, #258, #350, #351
 
-- Wired `upstream` + `watch`/`triage` commands in cli-entry.ts (recurring unwired command bug)
-- Made tests name-agnostic (resilient to team rebirths)
-- Dynamic blog discovery in docs-build tests (no longer hardcoded)
-- Cleared KNOWN_UNWIRED set (all commands now wired)
+## Next Up (Post-Reskill)
+
+### Remaining Sprint Bugs
+- **#342** — CastingEngine bypass (casting doesn't use the engine)
+- **#363** — WSL transient error handling
+- **#340** — SDK feature parity audit
+
+### SDK Work
+- SDK builder improvements
+- Feature parity between CLI and SDK paths
+
+### Upgrade Notes for PAO
+- Captured in session files — PAO needs to review and update docs for:
+  - `--roles` flag for `squad init`
+  - Version stamp in charters
+  - Ralph auto-inclusion in init
+  - Config sync after casting (SDK users)
 
 ## Process
 
-All work through PRs. Branch naming: `squad/{issue-number}-{slug}`. Never commit to main directly. Squad member review before merge.
+All work through PRs. Branch naming: `squad/{issue-number}-{slug}`. Never commit to main directly. Squad member review before merge. Always use bradygaster (personal) GitHub account for this repo.
