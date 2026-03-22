@@ -45,3 +45,29 @@ EECOM assigned:
 Pattern: Three architectural gaps identified (agent spec, state abstraction, quality tooling) + one production bug. StorageProvider abstraction critical for #479 atomicity fix.
 
 📌 **Team update (2026-03-22T06:44:01Z):** Flight issued comprehensive triage. EECOM owns StorageProvider PRD spec (#481) + history-shadow race mitigation (#479). Ready to begin implementation on next sprint.
+
+### PR #483 Review & Merge — Platform Adapter Timeout Fix (2026-03-22)
+
+Reviewed and merged diberry's fix for platform-adapter test timeouts that were blocking all 8 open PRs. Root cause: `getAvailableWorkItemTypes()` called `execFileSync('az', ...)` with no timeout — in CI where az CLI is installed but no real ADO org exists, it hangs indefinitely until Vitest kills it at 5s.
+
+**Fix pattern:** `{ ...EXEC_OPTS, timeout: 3_000 }` — spread existing exec options and add a 3-second timeout. The existing catch block already returns sensible default work item types, so timeout errors fall through gracefully. This is the correct pattern for any external CLI call that might hang: add a timeout to execFileSync and ensure the catch block has a fallback.
+
+**Rebase note:** Branch was already clean on top of dev (1 commit ahead, no divergence). No rebase was needed.
+
+📌 **Team update:** PR #483 merged (squash). This unblocks CI for all open PRs that were failing on platform-adapter test timeouts. The remaining CI failure across PRs is the broken docs link (separate issue).
+
+### PR #480 Review & Merge — History Race Condition Fix (2026-03-22)
+
+Reviewed and merged PR #480 (async mutex + atomic writes + 14 tests). Addresses race condition in history-shadow file operations under concurrent load.
+
+**Fix pattern:** Race conditions in history operations require three-layer defense: (1) async mutex for write serialization, (2) atomic file operations (write-then-rename), (3) comprehensive test coverage (14 tests for edge cases). This pattern applies to any persistent state under concurrent access.
+
+**Key learning:** File system race conditions aren't just "add a lock" — need atomicity guarantees (rename is atomic), serialization (mutex), and exhaustive test coverage to validate edge cases (concurrent writes, stale reads, partial failures).
+
+### PR #486 Review & Merge — SIGINT Handling (2026-03-22)
+
+Reviewed and merged PR #486 (two-layer signal handling + 22 tests). Improves graceful shutdown under SIGINT (Ctrl+C) by cleaning up both parent and child processes.
+
+**Fix pattern:** Signal handling in Node.js requires two layers: (1) parent process SIGINT handler that triggers graceful shutdown, (2) child process cleanup (kill child processes, close file handles, flush buffers). Incomplete cleanup leaves zombie processes or orphaned file locks. Test coverage essential: 22 tests verify process tree cleanup, signal propagation, and edge cases (nested children, immediate re-signals).
+
+**Key learning:** SIGINT handling is more complex than "add a signal handler" — need explicit child process cleanup logic + comprehensive tests. Pattern applies to any process spawning child processes (CLI spawning subshells, REPL spawning child REPL instances, etc.).

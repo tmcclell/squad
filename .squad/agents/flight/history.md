@@ -20,6 +20,21 @@ Manual label application needed by repo owner.
 **SDK Init Shore-Up PRD created:** Consolidated 6 SDK-related issues (#337-342, #340-341) into unified 3-phase initiative at `.squad/identity/prd-sdk-init-shoreup.md`. Root causes: config sync gap, built-in member exclusion (Ralph, @copilot), CastingEngine bypass. Solution: Phase 1 fixes gaps (P1), Phase 2 wires CastingEngine (P1), Phase 3 exercises full test matrix (P2). Estimated 4 sprints to 100% SDK feature parity. Owners: EECOM + CAPCOM (phases 1-2), FIDO + CAPCOM (phase 3).
 
 📌 **Team update (2026-03-11T01:25:00Z):** Flight completed 30-issue triage + unified SDK Init Shore-Up PRD. CAPCOM + EECOM completed deep technical analysis + implementation roadmap. 5 decisions merged to decisions.md: Phase-based quality improvement program, CastingEngine canonical casting, squad.config.ts as source of truth, Ralph always-included, implementation priority order.
+
+### Issue Triage & PR Pipeline (2026-03-22)
+
+**Triaged 6 unlabeled issues:** Assigned to appropriate squad members per domain expertise and team capacity. Applied `next-up` label to 10 priority items (bugs, easy wins, docs improvements). All triaged issues now have clear ownership and next steps.
+
+**PR Pipeline:** Reviewed and rebased 8 PRs across EECOM, GNC, and PAO. All merged successfully. Key patterns documented for team reuse:
+- **az CLI timeouts** (PR #483): External CLI calls need explicit timeouts + fallback handling
+- **History race conditions** (PR #480): File operations require mutex + atomic writes + exhaustive tests
+- **Signal handling** (PR #486): SIGINT cleanup needs two-layer approach (parent + child cleanup)
+- **ESM exports** (PR #474): Node 22 compatibility requires exports map + file existence validation
+- **Broken docs links** (PR #487): Automated link validation should be CI gate
+
+Test coverage expanded: 36 new tests (EECOM) + 4655+ total passing (GNC report).
+
+**Coordinator actions:** Filed #488 (GitHub auth documentation), created `next-up` label, labeled 10 priority issues for next sprint focus.
 📌 **Team update (2026-03-10T12-55-49Z):** Adoption tracking architecture finalized. Three-tier system approved: Tier 1 (aggregate-only, `.github/adoption/`) shipping with PR #326; Tier 2 (opt-in registry) designed for next PR; Tier 3 (public showcase) launches when ≥5 projects opt in. Append-only file governance rule enforced to prevent data loss. Microsoft ampersand style guide adopted for all user-facing documentation.
 
 ### PR #331 Review — Boundary Review Pattern Reinforced (2026-03-10)

@@ -30,6 +30,22 @@ Two-way communication layer between Squad and work environment. Outbound: Teams 
 
 📌 **Team update (2026-03-11T01:27:57Z):** Proactive communication patterns and PR trust levels (full/selective/self-managing spectrum) documented in decisions.md. Pattern rationale reinforced: Ralph 24/7 autonomous deployment requires awareness loop (Teams webhooks for outbound) and external work integration (WorkIQ scanning for inbound). Trust levels enable context-appropriate oversight without bottlenecking teams.
 
+### PR #487 Review & Merge — CLI Docs Expansion (2026-03-22)
+
+Reviewed and merged PR #487 (CLI documentation expansion + broken docs link fix). Improved CLI command reference coverage and fixed internal link validation.
+
+**Pattern identified:** Broken internal links hurt user navigation and SEO. Recommendations: (1) add link validation to docs build pipeline (crawl all internal references, report 404s), (2) make validation a CI gate (fail build on broken links), (3) maintain link checklist when refactoring docs structure.
+
+**Key learning:** Documentation maintenance requires systematic link validation. A single broken link creates friction for users following guides. Automated validation should be non-negotiable in CI/CD.
+
+### PR #482 Review & Merge — Pagefind Search Integration (2026-03-22)
+
+Reviewed and merged PR #482. Search functionality integrated into docs site for improved discoverability.
+
+### PR #484 Review & Merge — Sample READMEs (2026-03-22)
+
+Reviewed and merged PR #484. Sample README templates added to improve consistency across documentation examples.
+
 ### PR Trust Model Documentation (v0.8.26)
 Three trust levels for PR management: (1) Full review (default, team repos) — human gate on every merge; (2) Selective review (personal projects with patterns) — human reviews only critical paths; (3) Self-managing (solo personal repos only) — Squad merges own PRs, human reviews retroactively. Added to reviewer-protocol.md as new section. Important: self-managing ≠ unmonitored; use Ralph work monitoring and Teams notifications for awareness. Decision matrix included for when to use each level.
 
