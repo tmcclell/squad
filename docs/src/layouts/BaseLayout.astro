@@ -38,10 +38,18 @@ const ogImage = Astro.site ? new URL(squadLogo.src, Astro.site).href : squadLogo
     <ViewTransitions />
 
     <script is:inline>
-      const theme = localStorage.getItem('theme');
-      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
+      function restoreTheme() {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       }
+      restoreTheme();
+      document.addEventListener('astro:after-swap', restoreTheme);
+      document.addEventListener('astro:page-load', restoreTheme);
+      window.addEventListener('pageshow', (e) => { if (e.persisted) restoreTheme(); });
     </script>
   </head>
   <body class="min-h-screen bg-white dark:bg-surface-950 text-surface-900 dark:text-surface-100 antialiased">

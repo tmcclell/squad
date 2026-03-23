@@ -4,6 +4,14 @@
 
 ## Learnings
 
+### `squad version` subcommand (2026-07-15)
+
+**Context:** Running `squad version` returned "Unknown command: version" because the subcommand was never routed in `cli-entry.ts`, even though `--version` and `-v` flags worked fine. Classic "unwired command" bug class, but for a flag-to-subcommand gap rather than a missing import.
+
+**Fix:** Added `cmd === 'version'` to the existing `--version`/`-v` condition in `cli-entry.ts` (line ~130). Also added `version` to the help text command list. No new file in `cli/commands/` needed — this is a trivial inline handler, same as `--version`. The wiring test is unaffected since there's no separate command file.
+
+**Pattern:** When a CLI flag (`--foo`) works but the equivalent subcommand (`foo`) doesn't, the fix is almost always a single condition addition in `cli-entry.ts`. No separate command file needed for trivial handlers.
+
 ### Privacy scrub messaging + EPERM + gitignore parent coverage (#549) (2026-07-14)
 
 **Context:** Upgrade footer message always said "Preserves user state" even when the email privacy scrub had run — a direct contradiction of what just happened. Two related issues in the same function: EPERM on read-only `.gitattributes` would crash the upgrade, and `.gitignore` would add redundant entries already covered by parent paths (e.g. `.squad/log/` when `.squad/` was already present).

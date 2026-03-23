@@ -126,8 +126,8 @@ async function main(): Promise<void> {
   const rawCmd = args[0];
   const cmd = rawCmd?.trim() || '';
 
-  // --version / -v
-  if (cmd === '--version' || cmd === '-v') {
+  // --version / -v / version
+  if (cmd === '--version' || cmd === '-v' || cmd === 'version') {
     console.log(VERSION);
     return;
   }
@@ -223,6 +223,7 @@ async function main(): Promise<void> {
     console.log(`  ${BOLD}economy${RESET}    Toggle economy mode (cost-conscious model selection)`);
     console.log(`             Usage: economy [on|off]`);
 
+    console.log(`  ${BOLD}version${RESET}    Print installed version`);
     console.log(`  ${BOLD}help${RESET}       Show this help message`);
     console.log(`\nFlags:`);
     console.log(`  ${BOLD}--version, -v${RESET}  Print version`);
