@@ -229,6 +229,8 @@ When agents finish, the coordinator immediately chains follow-up work. If you st
 
 ### SDK-First Mode (New in Phase 1)
 
+> ⚠️ **Experimental.** SDK-first mode is under active development and has known bugs. Use markdown-first (the default) for production teams.
+
 Prefer TypeScript? You can define your team in code instead of markdown. Create a `squad.config.ts` with builder functions, run `squad build`, and the `.squad/` files are generated automatically.
 
 ```typescript
