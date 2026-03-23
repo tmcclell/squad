@@ -2,6 +2,7 @@
 
 > ⚠️ **Experimental** — Squad is alpha software. APIs, commands, and behavior may change between releases.
 
+> 📌 **Squad CLI only** — The Aspire dashboard integration requires the Squad CLI (`squad aspire`). It is not available when using GitHub Copilot CLI directly. Only Squad CLI commands emit OpenTelemetry data to the dashboard.
 
 **Try this:**
 ```
@@ -155,6 +156,17 @@ You'll see gauges, counters, and histograms:
 - `squad.agent.duration` — agent task duration (ms)
 - `squad.response.ttft` — time to first token (ms)
 - `squad.response.duration` — total response duration (ms)
+
+### Rework Rate Metrics (5th DORA)
+
+PR rework rate instruments, exported alongside the core metrics above:
+
+| Instrument | Type | Unit | Description |
+|-----------|------|------|-------------|
+| `squad.rework.rate` | Gauge | % | Current rework rate percentage |
+| `squad.rework.cycles` | Histogram | — | Review cycles per PR |
+| `squad.rework.rejection_rate` | Gauge | % | Percentage of PRs with changes requested |
+| `squad.rework.time_ms` | Histogram | ms | Time spent in rework |
 
 ### **Resources**
 

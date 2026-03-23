@@ -163,10 +163,18 @@ export const TEMPLATE_MANIFEST: TemplateFile[] = [
     description: 'Agent accumulated wisdom',
   },
   
+  // Issue lifecycle (squad-owned)
+  {
+    source: 'issue-lifecycle.md',
+    destination: 'issue-lifecycle.md',
+    overwriteOnUpgrade: true,
+    description: 'Issue lifecycle process template',
+  },
+
   // Skills subdirectory (squad-owned)
   {
     source: 'skills/squad-conventions/SKILL.md',
-    destination: 'skills/squad-conventions/SKILL.md',
+    destination: '../.copilot/skills/squad-conventions/SKILL.md',
     overwriteOnUpgrade: true,
     description: 'Squad conventions skill definition',
   },

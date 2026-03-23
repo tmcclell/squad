@@ -221,7 +221,7 @@ export class BenchmarkSuite {
     // Simulate config parsing: build and validate a config-like object
     const config = {
       version: '1.0.0',
-      models: { defaultModel: 'claude-sonnet-4.5', defaultTier: 'standard', fallbackChains: { premium: [], standard: [], fast: [] } },
+      models: { defaultModel: 'claude-sonnet-4.6', defaultTier: 'standard', fallbackChains: { premium: [], standard: [], fast: [] } },
       routing: { rules: [{ workType: 'feature-dev', agents: ['@coordinator'] }] },
     };
     JSON.parse(JSON.stringify(config));
@@ -263,8 +263,8 @@ export class BenchmarkSuite {
   private modelSelectionOp(): void {
     // Simulate model selection logic
     const tiers = {
-      premium: ['claude-opus-4.6', 'gpt-5.2'],
-      standard: ['claude-sonnet-4.5', 'gpt-5.1-codex'],
+      premium: ['claude-opus-4.6', 'gpt-5.4'],
+      standard: ['claude-sonnet-4.6', 'gpt-5.3-codex'],
       fast: ['claude-haiku-4.5', 'gpt-5-mini'],
     };
     const role = 'developer';
@@ -280,9 +280,9 @@ export class BenchmarkSuite {
     // Simulate export → serialize → deserialize → import round-trip
     const bundle = {
       config: { version: '1.0.0', models: {}, routing: { rules: [] } },
-      agents: [{ name: 'fenster', role: 'developer', content: '# Fenster' }],
+      agents: [{ name: 'agent-1', role: 'developer', content: '# Agent' }],
       skills: ['typescript', 'testing'],
-      routingRules: [{ pattern: 'feature/*', agent: 'fenster' }],
+      routingRules: [{ pattern: 'feature/*', agent: 'agent-1' }],
       metadata: { version: '1.0.0', timestamp: new Date().toISOString(), source: 'test' },
     };
     const serialized = JSON.stringify(bundle);

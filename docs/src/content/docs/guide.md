@@ -1,6 +1,6 @@
 # Squad — Product Guide
 
-## What Is Squad?
+## What is Squad?
 
 Squad gives you an AI development team through GitHub Copilot. You describe what you're building. Squad proposes a team of specialists — lead, frontend, backend, tester — that live in your repo as files. Each agent runs in its own context window, reads its own knowledge, and writes back what it learned. They persist across sessions, share decisions, and get better the more you use them.
 
@@ -8,36 +8,68 @@ It is not a chatbot wearing hats. Each team member is spawned as a real sub-agen
 
 ---
 
-## Supported Platforms
+## Which CLI should I use?
 
-Squad is designed for **GitHub Copilot CLI** and ships with full support. **VS Code is now fully supported with zero code changes** — agents work identically on both platforms.
+**Use GitHub Copilot CLI for day-to-day work.** It's the recommended interface for interacting with your Squad — full agent spawning, model selection, and conversational access to all features.
 
-**Current state:**
-- ✅ **GitHub Copilot CLI** — fully supported. This is the primary platform. Uses the stable `task` tool for sub-agent spawning, per-spawn model selection, and background mode.
-- ✅ **VS Code Copilot** — fully supported (v0.4.0+). VS Code uses `runSubagent` for parallel execution and supports full `.ai-team/` read/write. See [Client Compatibility Matrix](scenarios/client-compatibility.md) for details.
-- ❌ **Other platforms** — JetBrains IDEs and other runtimes are untested. GitHub.com web-based Copilot is untested.
+**Use Squad CLI for setup and operations:**
+- Initial setup: `squad init`
+- Build from config: `squad build`
+- Diagnostics: `squad doctor`
+- Interactive shell: `squad shell`
+- Continuous triage: `squad triage --interval 10`
+- Watch mode: `squad watch`
+- Aspire dashboard: `squad aspire`
+- Export/import: `squad export` and `squad import`
+- Plugin management: `squad plugin install <name>`
 
-For a detailed feature comparison across platforms (model selection, background execution, file access, etc.), see [Client Compatibility Matrix](scenarios/client-compatibility.md).
+**Common workflow:**
+```bash
+# Terminal 1: Run continuous triage (Squad CLI)
+squad triage --interval 10
+
+# Terminal 2: Work with your team (GitHub Copilot CLI)
+gh copilot
+> @squad what issues are ready to work?
+```
+
+Both CLIs read and write the same `.squad/` directory, so state stays synchronized. For more details, see [FAQ: Which CLI should I use?](guide/faq.md#which-cli-should-i-use) and [Client Compatibility Matrix](scenarios/client-compatibility.md).
+
+---
+
+## Supported platforms
+
+Squad works across multiple interfaces — GitHub Copilot CLI, VS Code, Squad CLI, SDK, and the Copilot Coding Agent. Pick the one that fits your workflow:
+
+- **GitHub Copilot CLI** — Day-to-day conversational work with your squad (recommended)
+- **VS Code** — Same experience, editor-integrated
+- **Squad CLI** — Setup, diagnostics, monitoring (`squad init`, `squad doctor`, `squad watch`)
+- **SDK** — Build tools on top of Squad with `squad.config.ts`
+- **Copilot Coding Agent** — Autonomous issue processing via `@copilot`
+
+**Multi-platform support:** Squad also works with Azure DevOps (work items, PRs via `az boards`/`az repos`), GitLab Issues, and Microsoft Planner through pluggable platform adapters. See [Enterprise Platforms](features/enterprise-platforms.md) for details.
+
+Not sure which to use? See [Choose your interface](get-started/choose-your-interface.md) for a complete comparison and decision tree.
 
 ---
 
 ## Installation
 
 ```bash
-npx github:bradygaster/squad
+npm install -g @bradygaster/squad-cli
 ```
 
 **Requirements:**
 - Node.js 20+ (LTS)
 - GitHub Copilot (CLI, VS Code, Visual Studio, or Coding Agent)
-- A git repository (Squad stores team state in `.ai-team/`)
+- A git repository (Squad stores team state in `.squad/`)
 - **`gh` CLI** — required for GitHub Issues, PRs, Ralph, and Project Boards ([install](https://cli.github.com/))
 
-This copies `squad.agent.md` into `.github/agents/`, installs 10 GitHub Actions workflows into `.github/workflows/`, and adds templates to `.ai-team-templates/`. Your actual team (`.ai-team/`) is created at runtime when you first talk to Squad.
+Running `squad init` creates the `.squad/` directory structure, copies `squad.agent.md` into `.github/agents/`, and installs GitHub Actions workflows into `.github/workflows/`. Your team is created at runtime when you first talk to Squad.
 
-**Note:** When you select Squad from the agent picker, you'll see the version number in the name (e.g., "Squad (v0.3.0)"). This helps you confirm which version is installed.
+**Note:** When you select Squad from the agent picker, you'll see the version number in the name (e.g., "Squad (v0.8.25)"). This helps you confirm which version is installed.
 
-### GitHub CLI Authentication
+### GitHub CLI authentication
 
 Squad uses the `gh` CLI for all GitHub API operations — issues, PRs, labels, project boards, and Ralph's work monitoring. You must authenticate before using any of these features.
 
@@ -57,7 +89,7 @@ gh auth status
 
 **Additional scopes** — some features require scopes beyond the default:
 
-| Feature | Required Scope | Command |
+| Feature | Required scope | Command |
 |---------|---------------|---------|
 | Issues, PRs, Ralph | `repo` (included by default) | — |
 | Project Boards | `project` | `gh auth refresh -s project` |
@@ -73,31 +105,31 @@ The `gh auth refresh` command adds scopes to your existing token — it takes ab
 
 ---
 
-## How Teams Form (Init Mode)
+## How teams form (init mode)
 
 When you open Copilot and select **Squad** for the first time in a repo, there's no team yet. Squad enters Init Mode:
 
 1. **Squad identifies you** via `git config user.name` and uses your name in conversation.
 2. **You describe your project** — language, stack, what it does.
-3. **Squad casts a team** — agents get names from a single fictional universe (e.g., The Usual Suspects, Alien, Ocean's Eleven). The universe is selected deterministically based on team size, project shape, and what's been used before. Names are persistent identifiers — they don't change the agent's behavior or voice.
+3. **Squad casts a team** — agents get names from a single fictional universe (e.g., Apollo 13 / NASA Mission Control, The Usual Suspects, Ocean's Eleven). The universe is selected deterministically based on team size, project shape, and what's been used before. Names are persistent identifiers — they don't change the agent's behavior or voice.
 4. **Squad proposes the team:**
 
 ```
-🏗️  Ripley   — Lead          Scope, decisions, code review
-⚛️  Dallas   — Frontend Dev  React, UI, components
-🔧  Kane     — Backend Dev   APIs, database, services
-🧪  Lambert  — Tester        Tests, quality, edge cases
+🏗️  FLIGHT   — Lead          Scope, decisions, code review
+⚛️  RETRO    — Frontend Dev  React, UI, components
+🔧  GNC      — Backend Dev   APIs, database, services
+🧪  TELMU    — Tester        Tests, quality, edge cases
 📋  Scribe   — (silent)      Memory, decisions, session logs
 ```
 
 5. **You confirm** — say "yes", adjust roles, add someone, or just give a task (which counts as implicit yes).
 
-Squad then creates the `.ai-team/` directory structure with charters, histories, routing rules, casting state, and ceremony config. Each agent's `history.md` is seeded with your project description and tech stack so they have day-1 context.
+Squad then creates the `.squad/` directory structure with charters, histories, routing rules, casting state, and ceremony config. Each agent's `history.md` is seeded with your project description and tech stack so they have day-1 context.
 
 ### What gets created
 
 ```
-.ai-team/
+.squad/
 ├── team.md                    # Roster — who's on the team
 ├── routing.md                 # Who handles what
 ├── ceremonies.md              # Team meeting definitions
@@ -122,17 +154,17 @@ Squad then creates the `.ai-team/` directory structure with charters, histories,
 
 ---
 
-## Talking to Your Team (Routing)
+## Talking to your team (routing)
 
 How you phrase your message determines who works on it.
 
 ### Name an agent directly
 
 ```
-> Ripley, fix the error handling in the API
+> FLIGHT, fix the error handling in the API
 ```
 
-Squad spawns Ripley specifically.
+Squad spawns FLIGHT specifically.
 
 ### Say "team" for parallel fan-out
 
@@ -162,7 +194,7 @@ Squad answers directly without spawning an agent.
 
 | You say | What happens |
 |---------|-------------|
-| `"Dallas, set up the project structure"` | Dallas (Frontend) scaffolds the project |
+| `"RETRO, set up the project structure"` | RETRO (Frontend) scaffolds the project |
 | `"Team, build the user dashboard"` | Multiple agents launch in parallel |
 | `"Where are we?"` | Squad gives a quick status from recent logs |
 | `"Run a retro"` | Lead facilitates a retrospective ceremony |
@@ -171,178 +203,218 @@ Squad answers directly without spawning an agent.
 
 ---
 
-## Response Modes
+## Response modes
 
-Not every request needs the full agent machinery. Squad uses tiered response modes to balance speed and depth:
+Squad automatically picks the right response speed based on your request complexity. Direct answers take seconds, full agent spawns take longer but deliver deeper reasoning and parallel work. You don't control the mode — Squad routes based on what the task needs.
 
-| Mode | Approximate Time | What Happens | When Used |
-|------|-------------------|-------------|-----------|
-| **Direct** | ~2–3s | Coordinator answers from memory/context — no agent spawned | Quick factual questions, status checks |
-| **Lightweight** | ~8–12s | Agent spawned with reduced overhead (no charter/history/decisions reads) | Simple tasks with known inputs |
-| **Standard** | ~25–35s | Full agent spawn with charter, history, and decisions | Most work requests |
-| **Full** | ~40–60s | Multi-agent parallel spawn with design review ceremony | Complex multi-domain tasks |
-
-The coordinator selects the mode automatically. You don't need to specify it. More complex tasks naturally take longer because more agents are working in parallel and reading more context.
+→ [Full guide: Response Modes](features/response-modes.md)
 
 ---
 
-## Memory System
+## SDK-first mode
 
-Squad's memory is layered. Knowledge grows with use.
+Define your team in TypeScript instead of maintaining markdown files manually. Write a `squad.config.ts` with type-safe builder functions, and `squad build` generates the `.squad/` governance markdown.
 
-### Personal memory: `history.md`
+```typescript
+import { defineSquad, defineTeam, defineAgent, defineRouting } from '@bradygaster/squad-sdk';
 
-Each agent has its own `history.md` in `.ai-team/agents/{name}/`. After every session, agents append what they learned — architecture decisions, conventions, user preferences, key file paths. This file is read only by that agent.
+export default defineSquad({
+  team: defineTeam({
+    name: 'Core Squad',
+    description: 'The main engineering team',
+    members: ['@edie', '@mcmanus'],
+  }),
+  agents: [
+    defineAgent({
+      name: 'edie',
+      role: 'TypeScript Engineer',
+      model: 'claude-sonnet-4',
+      capabilities: [{ name: 'type-system', level: 'expert' }],
+    }),
+  ],
+  routing: defineRouting({
+    rules: [{ pattern: 'feature-*', agents: ['@edie'], tier: 'standard' }],
+    defaultAgent: '@coordinator',
+  }),
+});
+```
 
-After a few sessions, agents stop asking questions they've already answered.
-
-### Shared memory: `decisions.md`
-
-Team-wide decisions live in `.ai-team/decisions.md`. Every agent reads this before working. Decisions are captured in three ways:
-
-1. **From agent work** — agents write decisions to `.ai-team/decisions/inbox/{name}-{slug}.md`
-2. **From user directives** — when you say "always use..." or "never do..."
-3. **Scribe merges** — the Scribe agent consolidates inbox entries into the canonical file, deduplicates, and propagates updates to affected agents
-
-### Skills: `.ai-team/skills/`
-
-Skill files (`SKILL.md`) encode reusable knowledge. They come in two varieties:
-
-- **Starter skills** — bundled at init (e.g., squad conventions)
-- **Earned skills** — written by agents from real work, with a confidence lifecycle: `low → medium → high`
-
-Agents read relevant skill files before working on a task.
-
-### How memory compounds
-
-| Stage | What agents know |
-|-------|-----------------|
-| 🌱 First session | Project description, tech stack, user name |
-| 🌿 After a few sessions | Conventions, component patterns, API design, test strategies |
-| 🌳 Mature project | Full architecture, tech debt map, regression patterns, performance conventions |
-
----
-
-## Export and Import
-
-### Export your squad
+**Get started:**
 
 ```bash
-npx github:bradygaster/squad export
+squad init --sdk          # New project with SDK config
+squad migrate --to sdk    # Convert existing .squad/ to TypeScript
+squad build               # Generate .squad/ from config
+squad build --check       # Validate in CI without writing
 ```
 
-Creates `squad-export.json` — a portable snapshot of your entire team: agents, casting state, skills, and accumulated knowledge.
+Builder functions: `defineTeam()`, `defineAgent()`, `defineRouting()`, `defineCeremony()`, `defineHooks()`, `defineCasting()`, `defineTelemetry()`, `defineSkill()`, `defineSquad()`.
 
-Use this to:
-- Back up your team before major changes
-- Share a trained team with a colleague
-- Move a team to a different repo
+→ [Full guide: SDK-First Mode](sdk-first-mode.md)
 
-### Import a squad
+---
+
+## Casting system
+
+Squad names agents from fictional universes — Apollo 13 / NASA Mission Control (the default), The Usual Suspects, Breaking Bad, Star Trek, and others. The universe is selected deterministically based on team size and project shape.
+
+Casting is **persistent** — once an agent receives a name, it keeps that name across sessions. The casting registry lives in `.squad/casting/registry.json`. You control which universes are available through a policy allowlist and can set per-universe capacity limits.
+
+In SDK-first mode, configure casting with `defineCasting()`:
+
+```typescript
+defineCasting({
+  allowlistUniverses: ['Apollo 13', 'Breaking Bad'],
+  overflowStrategy: 'generic',
+  capacity: { 'Apollo 13': 8 },
+});
+```
+
+When a universe runs out of names, the overflow strategy determines what happens: `reject` (error), `generic` (use a functional name), or `rotate` (move to the next universe).
+
+---
+
+## Skills system
+
+Skills are reusable knowledge patterns that agents load on demand. They live in `.squad/skills/{name}/SKILL.md` and teach agents how to handle specific tasks — branching workflows, deployment strategies, testing patterns, or domain expertise.
+
+Skills have a confidence lifecycle: `low` → `medium` → `high`, and track their source: `manual` (you wrote it), `observed` (agent saw a pattern), `earned` (validated through use), or `extracted` (imported from another project).
+
+In SDK-first mode, define skills with `defineSkill()`:
+
+```typescript
+defineSkill({
+  name: 'git-workflow',
+  description: 'Squad branching model and PR conventions',
+  domain: 'workflow',
+  confidence: 'high',
+  source: 'manual',
+  content: `
+    ## Patterns
+    - Branch from dev: squad/{issue-number}-{slug}
+    - PRs target dev, not main
+  `,
+});
+```
+
+Skills accumulate as you work. After a few sessions, your team has a knowledge base tailored to your codebase.
+
+→ [Full guide: Skills](features/skills.md)
+
+---
+
+## Ceremonies
+
+Ceremonies are structured team meetings. Squad ships with two default ceremonies — Design Review (triggers before multi-agent work) and Retrospective (triggers after failures). You can trigger ceremonies manually, create custom ones, or disable them. Configuration lives in `.squad/ceremonies.md`.
+
+In SDK-first mode, define ceremonies with `defineCeremony()`:
+
+```typescript
+defineCeremony({
+  name: 'standup',
+  trigger: 'schedule',
+  schedule: '0 9 * * 1-5',
+  participants: ['@edie', '@mcmanus'],
+  agenda: 'Yesterday / Today / Blockers',
+});
+```
+
+→ [Full guide: Ceremonies](features/ceremonies.md#ceremonies)
+
+---
+
+## Ralph — work monitor
+
+Ralph triages your issue backlog, assigns work to agents, and keeps the board moving. Activate Ralph when you have open issues, and he reports every 3–5 rounds.
+
+```
+> Ralph, start monitoring
+```
+
+**CLI commands:**
+- `squad triage` — run a single triage pass
+- `squad triage --interval 10` — continuous triage every 10 minutes
+- `squad watch` — Ralph watchdog mode (monitors and auto-restarts)
+
+The `squad-heartbeat` workflow runs Ralph on a schedule — your squad triages issues between sessions.
+
+**Note:** `squad ralph` is a legacy alias. New projects should use `squad triage`.
+
+→ [Full guide: Ralph — Work Monitor](features/ralph.md#ralph--work-monitor)
+
+---
+
+## Memory system
+
+Squad's memory is layered — personal agent histories, shared team decisions, and reusable skills. Knowledge compounds over sessions. After a few sessions, agents stop asking questions they've already answered. Mature projects carry full architecture knowledge and decision history.
+
+→ [Full guide: Memory System](features/memory.md)
+
+---
+
+## Plugin marketplace
+
+Extend your squad with community plugins — reusable collections of skills, ceremonies, and directives.
 
 ```bash
-npx github:bradygaster/squad import squad-export.json
+squad plugin install github/my-org/my-extension
+squad plugin list
+squad plugin remove my-extension
 ```
 
-Imports the snapshot into the current repo. Squad handles collision detection — if agents with the same names already exist, it warns you.
+Plugins let you add domain expertise (Azure infrastructure patterns), workflow templates (client-delivery processes), or testing ceremonies without modifying Squad core. Build your own and share them.
 
-Use `--force` to archive existing agents and replace them:
+→ [Full guide: Plugins](features/plugins.md) | [Marketplace](features/marketplace.md)
+
+---
+
+## SubSquads (streams)
+
+Break large teams into focused SubSquads — smaller groups that work independently on different features or domains. SubSquads maintain their own routing and task queues while sharing the parent squad's decisions and memory.
 
 ```bash
-npx github:bradygaster/squad import squad-export.json --force
+squad subsquads
 ```
 
-During import, agent histories are split into **portable knowledge** (general learnings that transfer) and **project-specific learnings** (which stay context-tagged). This means imported agents bring their skills without assuming your project works the same way.
+→ [Full guide: Streams](features/streams.md)
 
 ---
 
-## GitHub Issues Mode
+## Export and import
 
-Squad integrates with GitHub Issues via the `gh` CLI for issue-driven development.
+Export creates a portable snapshot of your entire team — agents, knowledge, skills. Import brings that snapshot into another repo. Squad handles collision detection and splits imported knowledge into portable learnings and project-specific context automatically.
 
-### Connect to a repository
-
-```
-> Connect to myorg/myrepo
-```
-
-Squad stores the issue source and makes the repository's issues available to the team.
-
-### View the backlog
-
-```
-> Show the backlog
+```bash
+squad export --out my-team.json
+squad import my-team.json
+squad import my-team.json --force   # Archive existing agents first
 ```
 
-Squad displays open issues in a table format.
-
-### Assign an issue to an agent
-
-```
-> Work on #12
-```
-
-The appropriate agent picks up the issue. What happens next:
-
-1. Agent creates a branch with a descriptive name based on the issue
-2. Agent does the implementation work
-3. Agent opens a PR linked to the issue
-
-### Handle PR review feedback
-
-```
-> There's review feedback on PR #3
-```
-
-The relevant agent reads the review comments and addresses them.
-
-### Merge completed work
-
-```
-> Merge it
-```
-
-The PR is merged and the linked issue is closed.
-
-### Check remaining work
-
-```
-> What's left?
-```
-
-Squad refreshes the backlog and shows remaining open issues.
+→ [Full guide: Export and Import](features/export-import.md#export--import)
 
 ---
 
-## PRD Mode
+## GitHub Issues mode
 
-If you have a product requirements document, paste the spec directly:
+Squad integrates with GitHub Issues for issue-driven development. Connect to a repo, view the backlog, assign issues to agents, and Squad handles branch creation, implementation, PR creation, and review feedback. Agents link work to issues automatically.
 
-```
-> Here's what we're building:
->
-> [paste your PRD or spec here]
-```
-
-The Lead agent decomposes the spec into discrete work items. These become trackable tasks that Squad distributes across the team. Each work item gets assigned to the agent best suited for it, and the team works them in parallel where possible.
+→ [Full guide: GitHub Issues Mode](features/github-issues.md#github-issues-mode)
 
 ---
 
-## Human Team Members
+## PRD mode
 
-Not every team member needs to be an AI agent. You can add human team members to the roster:
+Paste your product requirements document directly into Squad. The Lead agent decomposes the spec into discrete work items, assigns them to the right agents, and the team works in parallel. Specs become trackable tasks automatically.
 
-```
-> Add Sarah as a human team member — she handles design reviews
-```
+→ [Full guide: PRD Mode](features/prd-mode.md#prd-mode)
 
-Human team members appear in the roster with a distinct badge. When work is routed to a human:
+---
 
-- **Squad pauses** and tells you a human needs to act
-- **Stale reminders** trigger if the human hasn't responded after a configurable period
-- Humans can serve as **reviewers** in the reviewer protocol
+## Human team members
 
-This is useful for teams where certain decisions (design sign-off, security review, product approval) require a real person.
+Not every team member needs to be an AI agent. Add humans to the roster for decisions that require a real person — design sign-off, security review, product approval. Squad pauses when work is routed to a human and reminds you if they haven't responded.
+
+→ [Full guide: Human Team Members](features/human-team-members.md#human-team-members)
 
 ---
 
@@ -352,54 +424,22 @@ Your squad can notify you when they need input — send instant pings to Teams, 
 
 **Setup is quick:** Configure an MCP notification server (takes 5 minutes), and agents automatically know when to ping you.
 
-See [Notifications Guide](features/notifications.md) for platform-specific setup and examples. For MCP configuration details, see [MCP Setup Guide](features/mcp.md).
+See [Notifications Guide](features/notifications.md#quick-start-teams-simplest-path) for platform-specific setup and examples. For MCP configuration details, see [MCP Setup Guide](features/mcp.md#step-by-step-cli-setup).
 
 ---
 
-## Ceremonies
+## Multi-platform support
 
-Ceremonies are structured team meetings. Squad ships with two default ceremonies:
+Squad works with more than GitHub. Pluggable platform adapters let you use:
 
-### Design Review (automatic)
+- **GitHub** — Issues, PRs, Project Boards (via `gh` CLI)
+- **Azure DevOps** — Work items, repos, PRs (via `az boards`/`az repos` CLI)
+- **GitLab** — Issues and merge requests
+- **Microsoft Planner** — Hybrid work-item tracking (via Microsoft Graph API)
 
-**Triggers before** multi-agent tasks involving 2+ agents modifying shared systems. The Lead facilitates, spawning each relevant agent to get their perspective on interfaces, risks, and contracts before work begins.
+Configure cross-project ADO support in `.squad/config.json` — work items can live in a different org/project than the repo.
 
-```
-> Team, rebuild the authentication system
-
-📋 Design Review completed — facilitated by Ripley
-   Decisions: 3 | Action items: 4
-   Agreed on JWT format, session storage strategy, and endpoint contracts
-```
-
-### Retrospective (automatic)
-
-**Triggers after** build failures, test failures, or reviewer rejections. The Lead facilitates a focused root-cause analysis.
-
-```
-📋 Retrospective completed — facilitated by Ripley
-   Decisions: 2 | Action items: 3
-   Root cause: missing null check in API response parser
-```
-
-### Manual ceremonies
-
-You can trigger any ceremony on demand:
-
-```
-> Run a retro
-> Run a design meeting before we start
-```
-
-You can also create, disable, or skip ceremonies:
-
-```
-> Add a ceremony for code reviews
-> Disable retros
-> Skip the design review for this task
-```
-
-Ceremony configuration lives in `.ai-team/ceremonies.md`.
+→ [Full guide: Enterprise Platforms](features/enterprise-platforms.md) | [GitLab Issues](features/gitlab-issues.md)
 
 ---
 
@@ -408,16 +448,28 @@ Ceremony configuration lives in `.ai-team/ceremonies.md`.
 Already have Squad installed? Update to the latest version:
 
 ```bash
-npx github:bradygaster/squad upgrade
+npm install -g @bradygaster/squad-cli@latest
 ```
 
-This overwrites `squad.agent.md` and `.ai-team-templates/` with the latest versions. It **never touches `.ai-team/`** — your team's knowledge, decisions, casting state, and skills are safe.
+Run `squad doctor` to validate your setup after upgrading:
 
-Smart upgrade detects your installed version, reports what changed, and runs any needed migrations (e.g., creating `.ai-team/skills/` if it didn't exist). Migrations are additive and idempotent — safe to re-run.
+```bash
+squad doctor
+```
+
+Doctor runs 9 checks — Node.js version, `gh` CLI auth, `.squad/` directory structure, team state, and more. It reports issues with clear fix instructions.
+
+**Migrating from `.ai-team/` to `.squad/`:**
+
+```bash
+squad migrate --from ai-team
+```
+
+This renames `.ai-team/` to `.squad/` and updates all internal references.
 
 ---
 
-## Context Budget
+## Context budget
 
 Each agent runs in its own context window. Real numbers:
 
@@ -433,7 +485,7 @@ The coordinator uses 6.6% of its window. A 12-week veteran agent uses 4.5% — b
 
 ---
 
-## Known Limitations
+## Known limitations
 
 - **Experimental** — file formats and APIs may change between versions.
 - **Silent success bug** — approximately 7–10% of background agent spawns complete all their file writes but return no text response. This is a platform-level issue. Squad detects it by checking the filesystem for work product and reports what it finds. Work is not lost.
@@ -444,7 +496,7 @@ The coordinator uses 6.6% of its window. A 12-week veteran agent uses 4.5% — b
 
 ---
 
-## Adding and Removing Team Members
+## Adding and removing team members
 
 ### Adding
 
@@ -460,44 +512,53 @@ Squad allocates a name from the current universe, generates a charter and histor
 > Remove the designer — we're past that phase
 ```
 
-Agents are never deleted. Their charter and history move to `.ai-team/agents/_alumni/`. Knowledge is preserved. If you need them back later, they remember everything.
+Agents are never deleted. Their charter and history move to `.squad/agents/_alumni/`. Knowledge is preserved. If you need them back later, they remember everything.
 
 ---
 
-## Reviewer Protocol
+## Reviewer protocol
 
-Agents with review authority (typically Tester and Lead) can **reject** work. On rejection:
+Agents with review authority can reject work. On rejection, the original author is locked out and a different agent must handle the revision. This prevents the common failure mode where an agent keeps fixing its own work in circles.
 
-1. The original author is **locked out** — they cannot revise their own rejected work.
-2. A **different agent** must handle the revision.
-3. If the revision is also rejected, the revision author is locked out too, and a third agent must take over.
-4. If all eligible agents are locked out, Squad escalates to you.
-
-This prevents the common failure mode where an agent keeps "fixing" its own work in circles.
+→ [Full guide: Reviewer Protocol](features/reviewer-protocol.md#reviewer-rejection-protocol)
 
 ---
 
-## File Ownership
+## File ownership
 
 Squad maintains a clear ownership model:
 
 | What | Owner | Safe to edit? |
 |------|-------|--------------|
 | `.github/agents/squad.agent.md` | Squad (overwritten on upgrade) | No — your changes will be lost |
-| `.ai-team-templates/` | Squad (overwritten on upgrade) | No |
-| `.ai-team/` | You and your team | Yes — this is your team's state |
+| `.squad/` | You and your team | Yes — this is your team's state |
+| `squad.config.ts` | You | Yes — your SDK-first config |
 | Everything else | You | Yes |
 
 ---
 
-## Quick Reference
+## Quick reference
 
 | Command | What it does |
 |---------|-------------|
-| `npx github:bradygaster/squad` | Install Squad in the current repo |
-| `npx github:bradygaster/squad upgrade` | Update Squad-owned files to latest |
-| `npx github:bradygaster/squad export` | Export team to `squad-export.json` |
-| `npx github:bradygaster/squad import <file>` | Import team from export file |
-| `npx github:bradygaster/squad import <file> --force` | Import, archiving existing agents |
-| `npx github:bradygaster/squad --version` | Show installed version |
-| `npx github:bradygaster/squad --help` | Show help |
+| `squad init` | Initialize Squad in the current repo |
+| `squad init --sdk` | Initialize with SDK-first TypeScript config |
+| `squad init --global` | Initialize a personal squad (cross-project) |
+| `squad build` | Generate `.squad/` from `squad.config.ts` |
+| `squad build --check` | Validate generated files match disk (for CI) |
+| `squad doctor` | Run 9 setup validation checks |
+| `squad shell` | Enter the interactive shell |
+| `squad triage` | Run a single triage pass |
+| `squad triage --interval 10` | Continuous triage every 10 minutes |
+| `squad watch` | Ralph watchdog mode |
+| `squad export` | Export team to `squad-export.json` |
+| `squad import <file>` | Import team from export file |
+| `squad import <file> --force` | Import, archiving existing agents |
+| `squad plugin install <name>` | Install a plugin from the marketplace |
+| `squad plugin list` | List installed plugins |
+| `squad migrate --to sdk` | Convert existing squad to SDK-first config |
+| `squad migrate --from ai-team` | Migrate from `.ai-team/` to `.squad/` |
+| `squad subsquads` | Manage SubSquads |
+| `squad status` | Show team status and global config |
+| `squad --version` | Show installed version |
+| `squad --help` | Show help |

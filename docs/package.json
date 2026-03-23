@@ -7,9 +7,14 @@
     "dev": "astro dev",
     "build": "astro build && npx pagefind --site dist",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "node --test tests/build-output.test.mjs && npx playwright test",
+    "test:build": "node --test tests/build-output.test.mjs",
+    "test:e2e": "npx playwright test"
   },
   "dependencies": {
+    "@astrojs/rss": "^4.0.17",
+    "@astrojs/sitemap": "^3.7.1",
     "@tailwindcss/vite": "^4.1.0",
     "astro": "^5.7.0",
     "sharp": "^0.34.5",

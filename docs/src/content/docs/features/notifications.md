@@ -1,4 +1,4 @@
-# Squad Pings You
+# Squad pings you
 
 > ⚠️ **Experimental** — Squad is alpha software. APIs, commands, and behavior may change between releases.
 
@@ -38,76 +38,54 @@ This means Squad works with any notification service. Pick your favorite messagi
 
 ## Quick Start: Teams (Simplest Path)
 
-### Option A: Teams Incoming Webhook (No Auth Setup)
+### What you need to know
 
-Teams webhooks are the fastest setup — just a URL.
+Squad doesn't ship a Teams MCP server. You bring your own — either a community implementation or one you build yourself. Squad agents discover the configured MCP server at spawn time and call it automatically when they need to notify you.
 
-1. **In Teams, create a channel for your squad:**
+### Teams Workflows webhook
+
+Teams Workflows (Power Automate) webhooks are the recommended approach. Office 365 Connectors were [retired by Microsoft](https://devblogs.microsoft.com/microsoft365dev/retirement-of-office-365-connectors-within-microsoft-teams/) — use Workflows instead.
+
+1. **Create a channel for your squad:**
    - Create a new Team called "My Squads" (or reuse an existing one)
    - Add a channel, e.g., `#squad-myproject`
 
-2. **Set up the webhook:**
-   - Right-click the channel → "Manage channel" → "Connectors"
-   - Search "Incoming Webhook" → "Configure"
-   - Give it a name (e.g., "Squad Notifications")
-   - Copy the webhook URL
+2. **Create a Workflows webhook:**
+   - Open the channel, select the **+** (add a tab) or go to the **Workflows** app in Teams
+   - Choose **"Post to a channel when a webhook request is received"**
+   - Follow the prompts to name the workflow and select your channel
+   - Copy the generated webhook URL (it starts with `https://prod-...logic.azure.com/...`)
 
-3. **Configure Squad:**
-   - Create or edit `.vscode/mcp.json` in your workspace:
+3. **Get a Teams webhook MCP server:**
+   
+   You need an MCP server that can POST to your webhook URL. Options:
+   
+   - **Community reference:** [benleane83's teams-webhook-mcp.js](https://gist.github.com/benleane83/f37b5bc1ed3d00e320ba48886109b82a) — a working implementation that sends MessageCard payloads (compatible with Workflows webhooks)
+   - **Build your own:** Use the community reference as a starting point
+   - **Search the MCP marketplace:** Look for Teams-compatible servers at https://mcpmarket.com
+
+4. **Configure Squad:**
+   
+   Create or edit `.vscode/mcp.json` in your workspace:
    ```json
    {
      "mcpServers": {
        "notifications": {
          "command": "node",
-         "args": ["path/to/teams-webhook-mcp.js"],
+         "args": ["/absolute/path/to/teams-webhook-mcp.js"],
          "env": {
-           "TEAMS_WEBHOOK_URL": "https://outlook.webhook.office.com/webhookb2/..."
+           "TEAMS_WEBHOOK_URL": "https://prod-XX.westus.logic.azure.com:443/workflows/..."
          }
        }
      }
    }
    ```
+   
+   Replace `/absolute/path/to/teams-webhook-mcp.js` with the path to your downloaded or created MCP server script. Replace the `TEAMS_WEBHOOK_URL` value with the URL from step 2.
 
-4. **Use it:**
+5. **Use it:**
    - Start a Squad session with `copilot squad`
    - When an agent needs input, your Teams channel lights up
-
-### Option B: Microsoft's Official Teams MCP Server (Full Auth)
-
-For integration with your Azure tenant and full Teams API access:
-
-1. **Register an Azure AD app:**
-   - Go to https://portal.azure.com → "Azure Active Directory" → "App registrations"
-   - New registration: name it "Squad Notifications"
-   - Copy the **Application (client) ID**
-
-2. **Set up credentials:**
-   - "Certificates & secrets" → "New client secret"
-   - Copy the secret value
-
-3. **Grant permissions:**
-   - "API permissions" → "Add a permission" → "Microsoft Graph"
-   - Add `Chat.Send`, `ChannelMessage.Send`
-   - Grant admin consent
-
-4. **Configure Squad:**
-   - Install Microsoft's Teams MCP server: https://github.com/microsoft/IF-MCP-Server-for-Microsoft-Teams
-   - Configure in `.vscode/mcp.json`:
-   ```json
-   {
-     "mcpServers": {
-       "teams": {
-         "command": "node",
-         "args": ["path/to/teams-mcp.js"],
-         "env": {
-           "AZURE_CLIENT_ID": "your-client-id",
-           "AZURE_CLIENT_SECRET": "your-secret",
-           "AZURE_TENANT_ID": "your-tenant-id"
-         }
-       }
-     }
-   }
-   ```
 
 ---
 
@@ -121,7 +99,7 @@ iMessage is built into macOS. If you're on a Mac, this is the fastest personal s
    - System allows Copilot to control Messages (grant permission when prompted)
 
 2. **Install the iMessage MCP server:**
-   - Get it from https://mcpmarket.com/server/imessage
+   - Search https://mcpmarket.com for "imessage" or compatible MCP servers
    - Follow its setup steps
 
 3. **Configure Squad:**
@@ -131,7 +109,7 @@ iMessage is built into macOS. If you're on a Mac, this is the fastest personal s
      "mcpServers": {
        "imessage": {
          "command": "node",
-         "args": ["path/to/imessage-mcp.js"],
+         "args": ["/absolute/path/to/imessage-mcp.js"],
          "env": {
            "IMESSAGE_TARGET": "your-phone-number-or-email"
          }
@@ -139,6 +117,8 @@ iMessage is built into macOS. If you're on a Mac, this is the fastest personal s
      }
    }
    ```
+   
+   Replace `/absolute/path/to/imessage-mcp.js` with the actual path to your downloaded MCP server script.
 
 4. **Test:**
    - Start a Squad session
@@ -212,7 +192,7 @@ For any HTTP endpoint (custom service, Zapier, IFTTT, etc.):
      "mcpServers": {
        "notifications": {
          "command": "node",
-         "args": ["path/to/webhook-mcp.js"],
+         "args": ["/absolute/path/to/webhook-mcp.js"],
          "env": {
            "WEBHOOK_URL": "https://your-service.com/notify"
          }
@@ -220,6 +200,8 @@ For any HTTP endpoint (custom service, Zapier, IFTTT, etc.):
      }
    }
    ```
+   
+   Replace `/absolute/path/to/webhook-mcp.js` with the actual path to your MCP server script.
 
 3. **Your endpoint receives POST:**
    ```json
@@ -402,16 +384,19 @@ Below are complete, copy-pasteable `.copilot/mcp-config.json` examples for each 
   "mcpServers": {
     "notifications": {
       "command": "node",
-      "args": ["path/to/teams-webhook-mcp.js"],
+      "args": ["/absolute/path/to/teams-webhook-mcp.js"],
       "env": {
-        "TEAMS_WEBHOOK_URL": "https://outlook.webhook.office.com/webhookb2/YOUR_WEBHOOK_URL_HERE"
+        "TEAMS_WEBHOOK_URL": "https://prod-XX.westus.logic.azure.com:443/workflows/YOUR_WORKFLOW_URL_HERE"
       }
     }
   }
 }
 ```
 
-**Setup:** Get your webhook URL from Teams channel settings (right-click channel → Manage → Connectors → Incoming Webhook).
+**Setup:** 
+1. Create a Workflows webhook in your Teams channel (Workflows app → "Post to a channel when a webhook request is received")
+2. Download a Teams webhook MCP server (see [community reference implementation](https://gist.github.com/benleane83/f37b5bc1ed3d00e320ba48886109b82a))
+3. Replace `/absolute/path/to/teams-webhook-mcp.js` with the actual path to your MCP server script
 
 ---
 
@@ -422,7 +407,7 @@ Below are complete, copy-pasteable `.copilot/mcp-config.json` examples for each 
   "mcpServers": {
     "notifications": {
       "command": "node",
-      "args": ["path/to/imessage-mcp.js"],
+      "args": ["/absolute/path/to/imessage-mcp.js"],
       "env": {
         "IMESSAGE_TARGET": "+1234567890"
       }
@@ -431,7 +416,10 @@ Below are complete, copy-pasteable `.copilot/mcp-config.json` examples for each 
 }
 ```
 
-Replace `+1234567890` with your phone number or email address registered in iCloud.
+**Setup:**
+1. Download an iMessage MCP server from https://mcpmarket.com
+2. Replace `/absolute/path/to/imessage-mcp.js` with the actual path to your MCP server script
+3. Replace `+1234567890` with your phone number or email address registered in iCloud
 
 ---
 
@@ -442,7 +430,7 @@ Replace `+1234567890` with your phone number or email address registered in iClo
   "mcpServers": {
     "notifications": {
       "command": "node",
-      "args": ["path/to/discord-webhook-mcp.js"],
+      "args": ["/absolute/path/to/discord-webhook-mcp.js"],
       "env": {
         "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
       }
@@ -451,7 +439,10 @@ Replace `+1234567890` with your phone number or email address registered in iClo
 }
 ```
 
-**Setup:** In Discord, right-click channel → Edit Channel → Integrations → Webhooks → New Webhook → copy the URL.
+**Setup:** 
+1. In Discord, right-click channel → Edit Channel → Integrations → Webhooks → New Webhook → copy the URL
+2. Download or create a Discord webhook MCP server (see mcp-notifications package or build your own)
+3. Replace `/absolute/path/to/discord-webhook-mcp.js` with the actual path to your MCP server script
 
 ---
 
@@ -462,7 +453,7 @@ Replace `+1234567890` with your phone number or email address registered in iClo
   "mcpServers": {
     "notifications": {
       "command": "node",
-      "args": ["path/to/webhook-mcp.js"],
+      "args": ["/absolute/path/to/webhook-mcp.js"],
       "env": {
         "WEBHOOK_URL": "https://your-service.com/notify",
         "WEBHOOK_AUTH_HEADER": "Authorization: Bearer YOUR_API_KEY",
@@ -473,7 +464,10 @@ Replace `+1234567890` with your phone number or email address registered in iClo
 }
 ```
 
-Your endpoint receives POST requests with agent name, message, and context.
+**Setup:**
+1. Create or download a generic webhook MCP server
+2. Replace `/absolute/path/to/webhook-mcp.js` with the actual path to your MCP server script
+3. Your endpoint receives POST requests with agent name, message, and context
 
 ---
 

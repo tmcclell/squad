@@ -9,6 +9,7 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import { randomBytes } from 'crypto';
 import { runInit } from '@bradygaster/squad-cli/core/init';
+import { getPackageVersion } from '@bradygaster/squad-cli/core/version';
 
 const TEST_ROOT = join(process.cwd(), `.test-cli-init-${randomBytes(4).toString('hex')}`);
 
@@ -37,6 +38,22 @@ describe('CLI: init command', () => {
     expect(content).toContain('version:');
   });
 
+  it('should stamp CLI version in squad.agent.md during init (#321)', async () => {
+    await runInit(TEST_ROOT);
+    
+    const agentPath = join(TEST_ROOT, '.github', 'agents', 'squad.agent.md');
+    const content = await readFile(agentPath, 'utf-8');
+    const currentVersion = getPackageVersion();
+    
+    // HTML comment must contain the current CLI version
+    expect(content).toContain(`<!-- version: ${currentVersion} -->`);
+    // Identity section must contain the current CLI version
+    expect(content).toContain(`- **Version:** ${currentVersion}`);
+    // {version} placeholder must be replaced
+    expect(content).not.toContain('`Squad v{version}`');
+    expect(content).toContain(`Squad v${currentVersion}`);
+  });
+
   it('should create .squad/ directory structure', async () => {
     await runInit(TEST_ROOT);
     
@@ -44,7 +61,7 @@ describe('CLI: init command', () => {
     expect(existsSync(join(TEST_ROOT, '.squad', 'decisions', 'inbox'))).toBe(true);
     expect(existsSync(join(TEST_ROOT, '.squad', 'orchestration-log'))).toBe(true);
     expect(existsSync(join(TEST_ROOT, '.squad', 'casting'))).toBe(true);
-    expect(existsSync(join(TEST_ROOT, '.squad', 'skills'))).toBe(true);
+    expect(existsSync(join(TEST_ROOT, '.copilot', 'skills'))).toBe(true);
     expect(existsSync(join(TEST_ROOT, '.squad', 'plugins'))).toBe(true);
     expect(existsSync(join(TEST_ROOT, '.squad', 'identity'))).toBe(true);
   });
@@ -121,7 +138,7 @@ describe('CLI: init command', () => {
   it('should copy starter skills if none exist', async () => {
     await runInit(TEST_ROOT);
     
-    const skillsPath = join(TEST_ROOT, '.squad', 'skills');
+    const skillsPath = join(TEST_ROOT, '.copilot', 'skills');
     const skills = await readdir(skillsPath);
     
     // Should have at least one skill

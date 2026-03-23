@@ -6,7 +6,7 @@
  */
 
 import { createRequire } from 'node:module';
-import { existsSync, readFileSync, unlinkSync } from 'node:fs';
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve as pathResolve } from 'node:path';
 import React from 'react';
 import { render } from 'ink';
@@ -20,6 +20,7 @@ import { ShellLifecycle, loadWelcomeData } from './lifecycle.js';
 import { SquadClient } from '@bradygaster/squad-sdk/client';
 import type { SquadSession } from '@bradygaster/squad-sdk/client';
 import type { SquadPermissionHandler } from '@bradygaster/squad-sdk/client';
+import { RateLimitError } from '@bradygaster/squad-sdk/adapter/errors';
 import type { ShellMessage } from './types.js';
 import { initSquadTelemetry, TIMEOUTS, StreamingPipeline, recordAgentSpawn, recordAgentDuration, recordAgentError, recordAgentDestroy, RuntimeEventBus, resolveSquad, resolveGlobalSquadPath } from '@bradygaster/squad-sdk';
 import type { UsageEvent } from '@bradygaster/squad-sdk';
@@ -28,8 +29,8 @@ import { buildCoordinatorPrompt, buildInitModePrompt, parseCoordinatorResponse, 
 import { loadAgentCharter, buildAgentPrompt } from './spawn.js';
 import { createSession, saveSession, loadLatestSession, type SessionData } from './session-store.js';
 import { parseDispatchTargets, type ParsedInput } from './router.js';
-import { agentSessionGuidance, genericGuidance, formatGuidance } from './error-messages.js';
-import { parseCastResponse, createTeam, formatCastSummary, type CastProposal } from '../core/cast.js';
+import { agentSessionGuidance, genericGuidance, rateLimitGuidance, extractRetryAfter, formatGuidance } from './error-messages.js';
+import { parseCastResponse, createTeam, formatCastSummary, augmentWithCastingEngine, type CastProposal } from '../core/cast.js';
 
 export { SessionRegistry } from './sessions.js';
 export { StreamBridge } from './stream-bridge.js';
@@ -61,6 +62,10 @@ export {
   teamConfigGuidance,
   agentSessionGuidance,
   genericGuidance,
+  rateLimitGuidance,
+  extractRetryAfter,
+  timeoutGuidance,
+  unknownCommandGuidance,
   formatGuidance,
 } from './error-messages.js';
 export type { ErrorGuidance } from './error-messages.js';
@@ -856,7 +861,14 @@ export async function runShell(): Promise<void> {
     // Create a temporary Init Mode coordinator session
     let initSession: SquadSession | null = null;
     try {
-      const initSysPrompt = buildInitModePrompt({ teamRoot });
+      // Check for .init-roles marker (set by `squad init --roles` or `/init --roles`)
+      const initRolesMarker = join(teamRoot, '.squad', '.init-roles');
+      const useBaseRoles = existsSync(initRolesMarker);
+      // Consume the marker immediately — it's been read, no need to persist
+      if (useBaseRoles) {
+        try { unlinkSync(initRolesMarker); } catch { /* ignore */ }
+      }
+      const initSysPrompt = buildInitModePrompt({ teamRoot, useBaseRoles });
       initSession = await client.createSession({
         streaming: true,
         systemMessage: { mode: 'append', content: initSysPrompt },
@@ -889,7 +901,7 @@ export async function runShell(): Promise<void> {
       debugLog('handleInitCast: response preview', accumulated.slice(0, 500));
 
       // Parse the team proposal
-      const proposal = parseCastResponse(accumulated);
+      let proposal = parseCastResponse(accumulated);
       if (!proposal) {
         debugLog('handleInitCast: failed to parse team from response');
         debugLog('handleInitCast: full response:', accumulated);
@@ -904,6 +916,13 @@ export async function runShell(): Promise<void> {
         });
         return;
       }
+
+      // Augment with CastingEngine if universe is recognized
+      proposal = augmentWithCastingEngine(proposal);
+      debugLog('handleInitCast: augmented proposal', {
+        universe: proposal.universe,
+        members: proposal.members.map(m => m.name),
+      });
 
       // Show the proposed team
       shellApi?.addMessage({
@@ -976,6 +995,8 @@ export async function runShell(): Promise<void> {
     if (existsSync(initPromptFile)) {
       try { unlinkSync(initPromptFile); } catch { /* ignore */ }
     }
+
+    // Note: .init-roles marker is already cleaned up in handleInitCast (consumed on read)
 
     // Invalidate the old coordinator session so the next dispatch builds one
     // with the real team roster
@@ -1102,11 +1123,38 @@ export async function runShell(): Promise<void> {
       debugLog('handleDispatch error:', err);
       recordShellError('dispatch', err instanceof Error ? err.constructor.name : 'unknown');
       const errorMsg = err instanceof Error ? err.message : String(err);
-      const friendly = errorMsg.replace(/^Error:\s*/i, '');
-      // Only show raw error detail when SQUAD_DEBUG=1; otherwise keep it generic
-      const detail = process.env['SQUAD_DEBUG'] === '1' ? friendly : 'Something went wrong processing your message.';
       if (shellApi) {
-        const guidance = genericGuidance(detail);
+        const isRateLimit =
+          err instanceof RateLimitError ||
+          /rate.?limit|quota.*exceed|429/i.test(errorMsg);
+        let guidance;
+        if (isRateLimit) {
+          const retryAfter =
+            err instanceof RateLimitError
+              ? err.retryAfter
+              : extractRetryAfter(errorMsg);
+          const model =
+            err instanceof RateLimitError ? err.context.model : undefined;
+          guidance = rateLimitGuidance({ retryAfter, model });
+          // Persist rate limit status so `squad doctor` can surface it.
+          try {
+            const squadDir = join(teamRoot, '.squad');
+            writeFileSync(
+              join(squadDir, 'rate-limit-status.json'),
+              JSON.stringify({
+                timestamp: new Date().toISOString(),
+                retryAfter,
+                model,
+                message: errorMsg,
+              }),
+            );
+          } catch { /* non-fatal */ }
+        } else if (process.env['SQUAD_DEBUG'] === '1') {
+          const friendly = errorMsg.replace(/^Error:\s*/i, '');
+          guidance = genericGuidance(friendly);
+        } else {
+          guidance = genericGuidance('Something went wrong processing your message.');
+        }
         shellApi.addMessage({
           role: 'system',
           content: formatGuidance(guidance),
@@ -1142,7 +1190,7 @@ export async function runShell(): Promise<void> {
   // Also ensures we start from a clean viewport before Ink renders.
   process.stdout.write('\x1b[2J\x1b[3J\x1b[H');
 
-  const { waitUntilExit } = render(
+  const { waitUntilExit, unmount } = render(
     React.createElement(ErrorBoundary, null,
       React.createElement(App, {
         registry,
@@ -1217,6 +1265,25 @@ export async function runShell(): Promise<void> {
   // Clear the loading message now that Ink is rendering
   process.stderr.write('\r\x1b[K');
 
+  // Signal handlers for graceful exit — prevents orphaned child processes on Ctrl+C.
+  // Calling unmount() causes waitUntilExit() to resolve, triggering the normal
+  // cleanup path below (session close, client disconnect, telemetry shutdown).
+  let _shellSignalCode: number | undefined;
+  let _shellExiting = false;
+  const handleShellSignal = (signal: 'SIGINT' | 'SIGTERM'): void => {
+    const code = signal === 'SIGINT' ? 130 : 143;
+    if (_shellExiting) {
+      // Second signal — force exit immediately
+      process.exit(code);
+    }
+    _shellExiting = true;
+    _shellSignalCode = code;
+    debugLog(`Received ${signal}, unmounting shell...`);
+    unmount();
+  };
+  process.on('SIGINT', () => handleShellSignal('SIGINT'));
+  process.on('SIGTERM', () => handleShellSignal('SIGTERM'));
+
   await waitUntilExit();
 
   // Record shell session duration before cleanup
@@ -1275,5 +1342,10 @@ export async function runShell(): Promise<void> {
     console.log(`${prefix}Squad out. ${durationStr}${agentStr} ${messageCount} message${messageCount === 1 ? '' : 's'}.`);
   } else {
     console.log(`${prefix}Squad out.`);
+  }
+
+  // If we exited due to a signal, propagate the conventional exit code
+  if (_shellSignalCode !== undefined) {
+    process.exit(_shellSignalCode);
   }
 }

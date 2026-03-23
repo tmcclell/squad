@@ -2,19 +2,32 @@
 
 > Public Affairs Officer
 
+## Core Context
+
+Docs live in docs/ with blog/, concepts/, cookbook/, getting-started/, guide/, features/, scenarios/ sections. Blog tests use filesystem discovery (dynamic); other sections use hardcoded expected arrays. Microsoft Style Guide enforced: sentence-case headings, active voice, second person, present tense. Docs format: plain markdown, H1 title, experimental warning, "Try this" code blocks, overview, HR, H2 content sections. Scannability framework: paragraphs for narrative, bullets for scannable items, tables for comparisons.
+
 ## Learnings
 
-### Docs Build Architecture
-docs/ directory contains blog/, concepts/, cookbook/, getting-started/, guide/ sections. Build script produces HTML output for all sections. Blog posts follow numbered naming convention (001-xxx.md through 026-xxx.md).
+### Blog Post Format
+YAML frontmatter: title, date, author, wave, tags, status, hero. Body: experimental warning, What Shipped, Why This Matters, Quick Stats, What's Next. 200-400 words for infrastructure releases. No hype — explain value.
 
-### Dynamic Blog Test Pattern
-docs-build.test.ts discovers blog posts from filesystem instead of hardcoded list. Adding/removing blog posts no longer requires test updates. Other sections (getting-started, guides) still use hardcoded expected lists since they change rarely.
+### Boundary Review Heuristic
+"Squad Ships It" litmus test: if Squad doesn't ship the code/config, it's IRL content. Platform features used alongside Squad: clarify whose feature it is. Squad behavior/config docs stay. External infrastructure docs (ralph-operations, proactive-communication) → IRL.
+
+### DOCS-TEST SYNC
+When adding docs pages, update test assertions in docs-build.test.ts in the SAME commit. When rebasing doc PRs, main branch (already merged) takes priority.
 
 ### Contributor Recognition
-CONTRIBUTING.md and CONTRIBUTORS.md exist at repo root. Contributors Guide page added in v0.8.24. Each release should include contributor recognition updates.
+CONTRIBUTORS.md tracks team roster and community contributors. Each release includes recognition updates. Append PR counts, don't replace.
 
-### Blog Post Format (v0.8.25)
-Release blog posts use YAML frontmatter with: title, date, author, wave, tags, status, hero. Hero is one-sentence summary. Body includes experimental warning, What Shipped section with tables/code blocks, Why This Matters section, Quick Stats, What's Next. Keep practical and developer-focused, 200-400 words for infrastructure releases. Tone ceiling enforced: no hype, explain value.
+### Skill Scope Documentation Pattern
+Explicitly state what a skill produces and does NOT produce. Deterministic skills prevent agents from generating unnecessary code when templates exist.
+
+### Teams MCP Audit
+External tool integrations require explicit "where to get it" guidance. Placeholder paths need clarification that users must provide actual MCP server implementations.
+
+### Cross-Org Authentication Docs
+Problem/solution structure for multi-account auth: gh auth switch, Copilot instructions, Squad skill pattern. Cover credential helpers, EMU variations, common error messages. Cross-reference in troubleshooting and enterprise-platforms pages.
 
 ### Roster & Contributor Recognition (v0.8.25)
 Squad moved to Apollo 13/NASA Mission Control naming scheme (Flight, Procedures, EECOM, FIDO, PAO, CAPCOM, CONTROL, Surgeon, Booster, GNC, Network, RETRO, INCO, GUIDO, Telemetry, VOX, DSKY, Sims, Handbook). CONTRIBUTORS.md tracks both team roster and community contributors; contributor table entries grow with PRs (append PR counts rather than replace, maintaining attribution history).
@@ -47,3 +60,12 @@ Created docs/src/content/docs/scenarios/cross-org-auth.md covering GitHub person
 
 ### Scannability Framework (v0.8.25)
 Format selection is a scannability decision, not style preference. Paragraphs for narrative/concepts (3-4 sentences max). Bullets for scannable items (features, options, non-sequential steps). Tables for comparisons or structured reference data (config, API params). Quotes/indents for callouts/warnings. Decision test: if reader hunts for one item in a paragraph, convert to bullets/table. This framework is now a hard rule in charter under SCANNABILITY REVIEW.
+
+### npx Purge + Agency Audit
+Brady's distribution directive: `npm install -g @bradygaster/squad-cli` is the only supported install path. Remove ALL user-facing `npx @bradygaster/squad-cli` and `npx github:bradygaster/squad` references from docs. Replace with either `npm install -g` (for install steps) or `squad <command>` (for usage steps). Keep `npx` only for dev tools (changeset, vitest, astro, pagefind). Keep historical blog posts as-is. Migration.md "Before" column and CI/CD "OLD" examples are valid historical context — keep them. Insider program: `npm install -g @bradygaster/squad-cli@insider` and `squad upgrade` replace the old `npx github:bradygaster/squad#insider`. Agency audit: all "agency-agents" references in source files and docs are MIT attribution for the upstream open-source project — legally required, never touch them. The `agency copilot` example in cli-entry.ts help text was a competing-product reference — changed to `gh copilot`.
+
+### README Slimming + Upgrade Section (v0.8.x)
+Brady directive: README was too long at 512 lines. Cut the SDK deep-dive block (custom tools, hook pipeline, Ralph API code) and replaced it with a compact pointer to the docs site. Added a dedicated "Upgrading" section (two-step: `npm install -g` then `squad upgrade`) after Quick Start. Final length: 331 lines. SDK internals live in `docs/src/content/docs/reference/sdk.md` and `tools-and-hooks.md`. The README is now discovery/orientation; the docs site is the full reference.
+
+### v0.9.0 Release Blog Post (2026-03-23)
+Created `docs/src/content/blog/028-v090-whats-new.md` documenting Squad's biggest release: Personal Squad (ambient agent discovery + Ghost Protocol), Worktree Spawning (isolated branches per issue), Machine Capability Discovery (needs:* label routing), Cooperative Rate Limiting (predictive circuit breaker), Economy Mode (budget-aware model selection), Auto-Wired Telemetry, P0 upgrade fixes, and docs refresh. Blog format: frontmatter (title/date/author/wave/tags/status/hero) → experimental warning → "What Shipped" (10 features with H2 sections + callout boxes) → "Quick Stats" → "Breaking Changes" (none) → "Upgrading" → "What's Next". Messaging: clear, engaging, factual (no marketing fluff). Demonstrated: Personal Squad governance layer, worktree isolation, capability declaration, RAAS traffic-light pattern, economy fallback logic. Docs refresh section emphasized: README from 512→218 lines, dedicated upgrade guide, npx purged, Astro features, Teams MCP refresh, autonomous agents guide. Contributors: diberry (worktree tests + docs), wiisaacs (security review), community. No breaking changes — all additive opt-in features. Test discovery is dynamic (EXPECTED_BLOG uses filesystem scan), so new post auto-discovered; no test file changes needed. Pattern reinforced: each feature needs a story — if you can't explain it, it's not ready. Demos over descriptions (concrete code examples, YAML config blocks, Bash CLI examples).

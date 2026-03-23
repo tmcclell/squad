@@ -29,6 +29,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { title: 'Sample Prompts', slug: 'guide/sample-prompts' },
       { title: 'Personal Squad', slug: 'guide/personal-squad' },
       { title: 'Interactive Shell', slug: 'guide/shell' },
+      { title: 'Extensibility', slug: 'guide/extensibility' },
+      { title: 'Building Extensions', slug: 'guide/building-extensions' },
       { title: 'Contributing', slug: 'guide/contributing' },
       { title: 'Contributors', slug: 'guide/contributors' },
     ],
@@ -68,6 +70,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { title: 'Enterprise Platforms', slug: 'features/enterprise-platforms' },
       { title: 'Squad RC', slug: 'features/squad-rc' },
       { title: 'Streams', slug: 'features/streams' },
+      { title: 'Distributed Mesh', slug: 'features/distributed-mesh' },
     ],
   },
   {

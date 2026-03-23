@@ -1,5 +1,7 @@
 # Copilot Client Compatibility Matrix
 
+> **Quick answer:** Not sure which interface to use? See [Choose your interface](../get-started/choose-your-interface.md) for a concise decision tree and comparison.
+
 Squad runs on multiple Copilot surfaces — each with its own agent spawning mechanism, tool set, and constraints. This document maps Squad's core capabilities across CLI, VS Code, JetBrains, and GitHub.com to help you understand what works where.
 
 ## Quick Reference
@@ -267,4 +269,4 @@ This document is based on active research spikes (#32, #33, #34) conducted in Fe
 - [Model Selection](../features/model-selection.md) — Cost-first routing across agents
 - [Parallel Execution](../features/parallel-execution.md) — Background and sync patterns
 - [Worktrees](../features/worktrees.md) — Multi-branch isolation
-- [FAQ](../guide.md#troubleshooting) — Common questions and answers
+- [Troubleshooting](./troubleshooting.md) — Common questions and answers

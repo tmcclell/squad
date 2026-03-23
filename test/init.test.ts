@@ -82,7 +82,7 @@ describe('Squad Initialization', () => {
       const configContent = await readFile(result.configPath, 'utf-8');
       const parsed = JSON.parse(configContent);
       expect(parsed.version).toBe('1.0.0');
-      expect(parsed.models.defaultModel).toBe('claude-sonnet-4.5');
+      expect(parsed.models.defaultModel).toBe('claude-sonnet-4.6');
       expect(parsed.routing.rules).toHaveLength(4);
     });
 
@@ -136,7 +136,7 @@ describe('Squad Initialization', () => {
       expect(existsSync(join(TEST_ROOT, '.squad', 'agents'))).toBe(true);
       expect(existsSync(join(TEST_ROOT, '.squad', 'casting'))).toBe(true);
       expect(existsSync(join(TEST_ROOT, '.squad', 'decisions'))).toBe(true);
-      expect(existsSync(join(TEST_ROOT, '.squad', 'skills'))).toBe(true);
+      expect(existsSync(join(TEST_ROOT, '.copilot', 'skills'))).toBe(true);
     });
 
     it('should create .gitattributes for merge drivers', async () => {

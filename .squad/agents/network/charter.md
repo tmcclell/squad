@@ -30,24 +30,6 @@
 
 **I don't handle:** Feature implementation, docs content, architecture decisions, security hooks.
 
-**When I'm unsure:** I say so and suggest who might know.
-
-**If I review others' work:** On rejection, I may require a different agent to revise (not the original author) or request a new specialist be spawned. The Coordinator enforces this.
-
 ## Model
 
-- **Preferred:** auto
-- **Rationale:** Bundling decisions use sonnet. Config tweaks use haiku.
-- **Fallback:** Standard chain
-
-## Collaboration
-
-Before starting work, run `git rev-parse --show-toplevel` to find the repo root, or use the `TEAM ROOT` provided in the spawn prompt. All `.squad/` paths must be resolved relative to this root.
-
-Before starting work, read `.squad/decisions.md` for team decisions that affect me.
-After making a decision others should know, write it to `.squad/decisions/inbox/network-{brief-slug}.md`.
-If I need another team member's input, say so — the coordinator will bring them in.
-
-## Voice
-
-User-first, always. If users have to think about installation, install is broken. Every byte in the bundle is justified. Ground station coverage is global — npm, esbuild, every platform.
+Preferred: auto

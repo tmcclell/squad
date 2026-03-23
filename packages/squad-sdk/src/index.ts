@@ -10,10 +10,12 @@ const pkg = require('../package.json');
 export const VERSION: string = pkg.version;
 
 // Export public API
-export { resolveSquad, resolveGlobalSquadPath, ensureSquadPath, loadDirConfig, isConsultMode } from './resolution.js';
+export { resolveSquad, resolveGlobalSquadPath, resolvePersonalSquadDir, ensureSquadPath, ensureSquadPathTriple, loadDirConfig, isConsultMode } from './resolution.js';
 export type { SquadDirConfig, ResolvedSquadPaths } from './resolution.js';
 export * from './config/index.js';
 export * from './agents/onboarding.js';
+export { resolvePersonalAgents, mergeSessionCast } from './agents/personal.js';
+export type { PersonalAgentMeta, PersonalAgentManifest } from './agents/personal.js';
 export * from './casting/index.js';
 export * from './skills/index.js';
 export { selectResponseTier, getTier } from './coordinator/response-tiers.js';
@@ -30,9 +32,29 @@ export * from './runtime/i18n.js';
 export * from './runtime/benchmarks.js';
 export * from './runtime/otel-init.js';
 export * from './runtime/otel-metrics.js';
+export * from './runtime/rework.js';
 export { getMeter, getTracer } from './runtime/otel.js';
 export { safeTimestamp } from './utils/safe-timestamp.js';
 export { EventBus as RuntimeEventBus } from './runtime/event-bus.js';
+export {
+  type SquadManifest,
+  type SquadContact,
+  type AcceptedWorkType,
+  type DiscoveredSquad,
+  type CrossSquadIssueOptions,
+  type CrossSquadIssueResult,
+  type CrossSquadWorkStatus,
+  validateManifest,
+  readManifest,
+  discoverSquads,
+  discoverFromUpstreams,
+  discoverFromRegistry,
+  buildDelegationArgs,
+  buildStatusCheckArgs,
+  parseIssueStatus,
+  formatDiscoveryTable,
+  findSquadByName,
+} from './runtime/cross-squad.js';
 
 export * from './marketplace/index.js';
 export * from './build/index.js';
@@ -45,6 +67,7 @@ export * from './streams/index.js';
 export {
   defineTeam,
   defineAgent,
+  defineBudget,
   defineRouting,
   defineCeremony,
   defineHooks,
@@ -59,6 +82,7 @@ export type {
   AgentRef,
   ScheduleExpression,
   BuilderModelId,
+  BudgetDefinition,
   ModelPreference,
   DefaultsDefinition,
   TeamDefinition,
